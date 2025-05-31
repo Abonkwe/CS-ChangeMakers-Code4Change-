@@ -137,9 +137,9 @@ const navigation = [
   { text: 'Earnings', icon: AccountBalanceWalletIcon, path: '/earnings' },
 ];
 
-const MotionListItem = motion(ListItem);
-const MotionCard = motion(Card);
-const MotionBox = motion(Box);
+const MotionListItem = motion.create(ListItem);
+const MotionCard = motion.create(Card);
+const MotionBox = motion.create(Box);
 
 export default function MentorDashboard() {
   const [activePath, setActivePath] = useState('/dashboard');
