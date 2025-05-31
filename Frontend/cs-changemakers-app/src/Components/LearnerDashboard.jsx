@@ -1092,7 +1092,7 @@ function LearnerDashboard() {
             initial="hidden"
             animate="visible"
           >
-            <Container maxWidth="xl" disableGutters>
+            <Container sx={{ maxWidth: "none" }} disableGutters>
               <Box mb={4}>
                 <Typography variant="h4" gutterBottom color="primary" fontWeight="bold">
                   My Profile
