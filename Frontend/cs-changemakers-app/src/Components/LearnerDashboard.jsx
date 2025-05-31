@@ -1092,7 +1092,7 @@ function LearnerDashboard() {
             initial="hidden"
             animate="visible"
           >
-            <Container maxWidth="xl" disableGutters>
+            <Container sx={{ maxWidth: "none" }} disableGutters>
               <Box mb={4}>
                 <Typography variant="h4" gutterBottom color="primary" fontWeight="bold">
                   My Profile
@@ -1216,7 +1216,7 @@ function LearnerDashboard() {
               <MenuIcon />
             </IconButton>
             <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700, color: "primary.main" }}>
-              TalentForge Academy
+              TechBridge
             </Typography>
             <Badge badgeContent={3} color="error">
               <IconButton>
