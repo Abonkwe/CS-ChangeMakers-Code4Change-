@@ -1216,7 +1216,7 @@ function LearnerDashboard() {
               <MenuIcon />
             </IconButton>
             <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700, color: "primary.main" }}>
-              TalentForge Academy
+              TechBridge
             </Typography>
             <Badge badgeContent={3} color="error">
               <IconButton>
