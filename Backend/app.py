@@ -179,8 +179,25 @@ def create_project():
         return jsonify({"message": "Failed to create project", "error": str(e)}), 500 
 
 
+@app.route('/projects', methods=["GET"])
+def get_projects():
+    
+    try:
+        projects = db.session.execute(db.select(Project)).scalars.all()
 
+        all_projects = [project.to_json() for project in projects]
 
+        return jsonify({
+            "success": True,
+            "projects": all_projects,
+            "count": len(all_projects)
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": "Failed to fetch projects",
+            "error": str(e)
+        }), 500
 
 if __name__ == "__main__":
     with app.app_context():
