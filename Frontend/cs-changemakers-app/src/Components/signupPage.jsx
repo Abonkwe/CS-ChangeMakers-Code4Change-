@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Card,
@@ -122,16 +122,6 @@ const SignupPage = () => {
   const [successMsg, setSuccessMsg] = useState("");
   const navigate = useNavigate();
 
-  // Check if user is already authenticated
-  useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      // If authenticated, redirect to home and reload to update UI
-      navigate("/");
-      window.location.reload();
-    }
-  }, [navigate]);
-
   // Responsive breakpoints
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
@@ -194,17 +184,17 @@ const SignupPage = () => {
       if (res.data.access_token) {
         // Save all user info to localStorage
         localStorage.setItem("access_token", res.data.access_token);
-        if (res.data.id) localStorage.setItem("user_id", res.data.id);
-        if (res.data.name) localStorage.setItem("user_name", res.data.name);
-        if (res.data.tel) localStorage.setItem("user_tel", res.data.tel);
+        localStorage.setItem("user_id", res.data.id);
+        localStorage.setItem("user_name", res.data.name);
+        localStorage.setItem("user_tel", res.data.tel);
         if (res.data.email) localStorage.setItem("user_email", res.data.email);
         if (res.data.role) localStorage.setItem("user_role", res.data.role);
         if (res.data.link) localStorage.setItem("user_link", res.data.link);
 
         setSuccessMsg("Login successful!");
+        // Redirect to home page after a short delay
         setTimeout(() => {
           navigate("/");
-          window.location.reload(); // Rerender app to reflect auth state
         }, 800);
       }
     } catch (err) {
@@ -235,10 +225,9 @@ const SignupPage = () => {
       const res = await axios.post("http://localhost:5002/signup", payload);
       console.log("Signup response:", res.data); // <-- Console log backend response
       if (res.data.access_token) {
-        setSuccessMsg("Signup successful! Please login.");
-        setTimeout(() => {
-          setActiveTab(0); // Switch to login tab
-        }, 1200);
+        localStorage.setItem("access_token", res.data.access_token);
+        setSuccessMsg("Signup successful!");
+        // Redirect or update UI as needed
       }
     } catch (err) {
       setErrorMsg(
@@ -893,8 +882,7 @@ const SignupPage = () => {
                                     fontWeight: 600,
                                     background: "linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)",
                                     boxShadow: "0 4px 15px rgba(46, 204, 113, 0.4)",
-                                    "&:hover": {
-                                      background: "linear-gradient(135deg, #27ae60 0%, #229954 100%)",
+                                    "&:hover": {background: "linear-gradient(135deg, #27ae60 0%, #229954 100%)",
                                       boxShadow: "0 6px 20px rgba(46, 204, 113, 0.6)",
                                     },
                                   }}

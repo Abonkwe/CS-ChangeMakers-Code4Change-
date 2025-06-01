@@ -1,1349 +1,733 @@
-import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-  Avatar,
-  LinearProgress,
-  Chip,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  ListItemIcon,
-  Paper,
-  IconButton,
-  Badge,
-  AppBar,
-  Toolbar,
-  Drawer,
-  useTheme,
-  useMediaQuery,
-  CardActions,
+import React, { useState } from "react";
+import { 
+  Card, 
+  CardContent, 
+  Typography, 
+  Button, 
+  LinearProgress, 
+  Chip, 
+  Avatar, 
+  Grid, 
+  Box, 
+  Container,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
-  Divider,
-  Stack,
-  Container,
-  Fade,
-  Grow,
-  Slide,
+  Paper,
+  IconButton,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Drawer,
+  useTheme,
+  useMediaQuery,
+  AppBar,
+  Toolbar,
+  Divider
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
-  Person as PersonIcon,
+  EmojiEvents as GoalIcon,
+  CalendarToday as CalendarIcon,
+  BarChart as ReportIcon,
+  Person as UserIcon,
+  Edit as EditIcon,
+  AccessTime as ClockIcon,
+  Star as AwardIcon,
   School as SchoolIcon,
-  Work as WorkIcon,
-  EmojiEvents as TrophyIcon,
-  Group as GroupIcon,
+  Group as MentorIcon,
   Assignment as ProjectIcon,
-  Payment as PaymentIcon,
-  Notifications as NotificationIcon,
+  Settings as SettingsIcon,
   Menu as MenuIcon,
-  Star as StarIcon,
-  TrendingUp as TrendingUpIcon,
-  AccessTime as TimeIcon,
-  Business as BusinessIcon,
-  Code as CodeIcon,
-  Psychology as PsychologyIcon,
-  Timeline as TimelineIcon,
-  Launch as LaunchIcon,
-  CheckCircle as CheckCircleIcon,
-  Pending as PendingIcon,
-  Close as CloseIcon,
-  ArrowForward as ArrowForwardIcon,
-  PlayArrow as PlayArrowIcon,
-  BookmarkBorder as BookmarkIcon,
-  Language as LanguageIcon,
-  Speed as SpeedIcon,
-  LocalFireDepartment as FireIcon,
+  Close as CloseIcon
 } from "@mui/icons-material";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { motion, AnimatePresence } from "framer-motion";
 
-// Enhanced theme with better color scheme
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: "#2ecc71",
-      light: "#58d68d",
-      dark: "#27ae60",
-    },
-    secondary: {
-      main: "#e74c3c",
-      light: "#ec7063",
-      dark: "#c0392b",
-    },
-    background: {
-      default: "#f8fafc",
-      paper: "#ffffff",
-    },
-    text: {
-      primary: "#2d3748",
-      secondary: "#718096",
-    },
-  },
-  typography: {
-    fontFamily: "'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif",
-    h4: {
-      fontWeight: 700,
-      fontSize: "2rem",
-    },
-    h5: {
-      fontWeight: 600,
-    },
-    h6: {
-      fontWeight: 600,
-    },
-  },
-  shape: {
-    borderRadius: 12,
-  },
-  components: {
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
-          border: "1px solid #e2e8f0",
-          transition: "all 0.3s ease",
-          "&:hover": {
-            transform: "translateY(-4px)",
-            boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
-          },
-        },
-      },
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: "none",
-          fontWeight: 500,
-          borderRadius: 8,
-        },
-      },
-    },
-  },
-});
+const theme = {
+  primary: "#2ecc71",
+  secondary: "#e74c3c",
+  background: "#f8fafc",
+  cardBg: "#ffffff",
+  textPrimary: "#2d3748",
+  textSecondary: "#718096",
+  sidebarBg: "#ffffff",
+  sidebarHover: "#f0f9ff"
+};
 
 const drawerWidth = 280;
 
-// Animation variants
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: {
-      duration: 0.5,
-    },
-  },
-};
-
-const cardHover = {
-  scale: 1.02,
-  transition: { duration: 0.2 },
-};
-
-function LearnerDashboard() {
+function LearningDashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [paymentDialog, setPaymentDialog] = useState(false);
+  const [goalDialog, setGoalDialog] = useState(false);
+  const [editDialog, setEditDialog] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(null);
+
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));
-  const isTablet = useMediaQuery(muiTheme.breakpoints.between("md", "lg"));
 
-  // Get user info from localStorage
-  const [userName, setUserName] = useState("");
-  const [userImage, setUserImage] = useState("");
+  // Learning data
+  const [weeklyGoal, setWeeklyGoal] = useState({
+    title: "Master React Fundamentals",
+    targetHours: 20,
+    category: "Frontend Development"
+  });
 
-  useEffect(() => {
-    const name = localStorage.getItem("user_name") || "Learner";
-    const image = localStorage.getItem("user_image") || "";
-    setUserName(name);
-    setUserImage(image);
-  }, []);
+  const [dailyProgress, setDailyProgress] = useState([
+    { day: "Mon", hours: 3, task: "Learned React hooks", completed: true },
+    { day: "Tue", hours: 4, task: "Built todo app", completed: true },
+    { day: "Wed", hours: 2.5, task: "Studied state management", completed: true },
+    { day: "Thu", hours: 3.5, task: "Practiced components", completed: true },
+    { day: "Fri", hours: 2, task: "Worked on project", completed: true },
+    { day: "Sat", hours: 4, task: "Code review session", completed: true },
+    { day: "Sun", hours: 1, task: "Planning next week", completed: false }
+  ]);
 
-  // Enhanced Mock data (use userName and userImage)
-  const learnerData = {
-    name: userName,
-    avatar: userImage || "", // fallback to blank if not set
+  const [newGoal, setNewGoal] = useState({ title: "", targetHours: 10, category: "" });
+  const [editDay, setEditDay] = useState({ hours: 0, task: "", completed: false });
+
+  // Menu items - easily expandable
+  const menuItems = [
+    { id: "dashboard", label: "Dashboard", icon: <DashboardIcon />, active: true },
+    { id: "goals", label: "Weekly Goals", icon: <GoalIcon />, active: true },
+    { id: "progress", label: "Daily Progress", icon: <CalendarIcon />, active: true },
+    { id: "reports", label: "Reports", icon: <ReportIcon />, active: true },
+    { id: "mentors", label: "Mentors", icon: <MentorIcon />, active: false },
+    { id: "projects", label: "Projects", icon: <ProjectIcon />, active: false },
+    { id: "courses", label: "Courses", icon: <SchoolIcon />, active: false },
+    { id: "settings", label: "Settings", icon: <SettingsIcon />, active: false }
+  ];
+
+  // User data
+  const userData = {
+    name: "Tayo Mbah",
+    email: "tayo@example.com",
+    avatar: "https://via.placeholder.com/60",
     level: "Intermediate",
-    points: 2450,
-    completedCourses: 8,
-    activeProjects: 3,
-    mentorshipSessions: 12,
-    streak: 7,
-    rank: "Top 15%",
+    points: 2450
   };
 
-  const skills = [
-    { name: "JavaScript", level: 85, category: "Programming", growth: "+12%" },
-    { name: "React", level: 70, category: "Frontend", growth: "+8%" },
-    { name: "Node.js", level: 60, category: "Backend", growth: "+15%" },
-    { name: "Project Management", level: 45, category: "Soft Skills", growth: "+5%" },
-    { name: "Python", level: 30, category: "Programming", growth: "+20%" },
-  ];
+  // Calculations
+  const totalHours = dailyProgress.reduce((sum, day) => sum + day.hours, 0);
+  const completedDays = dailyProgress.filter(day => day.completed).length;
+  const progressPercent = Math.round((totalHours / weeklyGoal.targetHours) * 100);
 
-  const courses = [
-    {
-      title: "Advanced React Development",
-      progress: 75,
-      instructor: "John Doe",
-      price: 45000,
-      duration: "12 hours",
-      students: 1250,
-      rating: 4.8,
-    },
-    {
-      title: "Full Stack JavaScript",
-      progress: 45,
-      instructor: "Jane Smith",
-      price: 65000,
-      duration: "20 hours",
-      students: 980,
-      rating: 4.9,
-    },
-    {
-      title: "Startup Fundamentals",
-      progress: 90,
-      instructor: "Mike Johnson",
-      price: 35000,
-      duration: "8 hours",
-      students: 2100,
-      rating: 4.7,
-    },
-    {
-      title: "UI/UX Design Principles",
-      progress: 0,
-      instructor: "Sarah Chen",
-      price: 55000,
-      duration: "15 hours",
-      students: 750,
-      rating: 4.6,
-    },
-  ];
-
-  const projects = [
-    {
-      title: "E-commerce Platform",
-      status: "In Progress",
-      team: 4,
-      deadline: "2 weeks",
-      description: "Building a modern e-commerce solution with React and Node.js",
-      progress: 65,
-      tech: ["React", "Node.js", "MongoDB"],
-    },
-    {
-      title: "Mobile Banking App",
-      status: "Completed",
-      team: 3,
-      deadline: "Finished",
-      description: "Developed a secure mobile banking application",
-      progress: 100,
-      tech: ["React Native", "Firebase"],
-    },
-    {
-      title: "Educational Platform",
-      status: "Starting Soon",
-      team: 5,
-      deadline: "1 month",
-      description: "Creating an interactive learning management system",
-      progress: 0,
-      tech: ["Vue.js", "Django", "PostgreSQL"],
-    },
-  ];
-
-  const mentors = [
-    {
-      name: "Sarah Williams",
-      expertise: "Software Engineering",
-      rating: 4.9,
-      sessions: 5,
-      avatar: "/api/placeholder/50/50",
-      price: "15,000 XAF/hour",
-      specialties: ["React", "System Design"],
-    },
-    {
-      name: "David Chen",
-      expertise: "Product Management",
-      rating: 4.8,
-      sessions: 3,
-      avatar: "/api/placeholder/50/50",
-      price: "18,000 XAF/hour",
-      specialties: ["Strategy", "Analytics"],
-    },
-    {
-      name: "Emma Wilson",
-      expertise: "UI/UX Design",
-      rating: 4.7,
-      sessions: 4,
-      avatar: "/api/placeholder/50/50",
-      price: "12,000 XAF/hour",
-      specialties: ["Figma", "User Research"],
-    },
-  ];
-
-  const internships = [
-    {
-      title: "Junior Developer Internship",
-      company: "TechStart Inc.",
-      location: "Douala",
-      status: "Applied",
-      appliedDate: "2024-01-15",
-      duration: "3 months",
-      salary: "150,000 XAF/month",
-      skills: ["JavaScript", "React"],
-    },
-    {
-      title: "Frontend Developer Intern",
-      company: "Digital Solutions",
-      location: "Yaoundé",
-      status: "Interview Scheduled",
-      appliedDate: "2024-01-10",
-      duration: "6 months",
-      salary: "200,000 XAF/month",
-      skills: ["Vue.js", "CSS"],
-    },
-    {
-      title: "Software Development Intern",
-      company: "NGO Connect",
-      location: "Remote",
-      status: "Under Review",
-      appliedDate: "2024-01-20",
-      duration: "4 months",
-      salary: "180,000 XAF/month",
-      skills: ["Python", "Django"],
-    },
-  ];
-
-  const EnhancedStatCard = ({ title, value, icon, color = "primary", subtitle, trend }) => (
-    <motion.div variants={itemVariants} whileHover={cardHover}>
-      <Card sx={{ height: "100%", position: "relative", overflow: "visible" }}>
-        <CardContent sx={{ p: 3 }}>
-          <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-            <Avatar
-              sx={{
-                bgcolor: `${color}.main`,
-                width: 56,
-                height: 56,
-                boxShadow: 3,
-              }}
-            >
-              {icon}
-            </Avatar>
-            {trend && (
-              <Chip
-                label={trend}
-                size="small"
-                color="success"
-                sx={{ fontWeight: 600 }}
-              />
-            )}
-          </Box>
-          <Typography variant="h3" color={`${color}.main`} fontWeight="bold" mb={1}>
-            {value}
-          </Typography>
-          <Typography color="text.primary" variant="h6" fontWeight={500} mb={0.5}>
-            {title}
-          </Typography>
-          {subtitle && (
-            <Typography variant="body2" color="text.secondary">
-              {subtitle}
-            </Typography>
-          )}
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-
-  const sidebarItems = [
-    { id: "dashboard", text: "Dashboard", icon: <DashboardIcon /> },
-    { id: "profile", text: "My Profile", icon: <PersonIcon /> },
-    { id: "courses", text: "Learning Hub", icon: <SchoolIcon /> },
-    { id: "projects", text: "Projects", icon: <ProjectIcon /> },
-    { id: "mentorship", text: "Mentorship", icon: <GroupIcon /> },
-    { id: "internships", text: "Internship Tracker", icon: <WorkIcon /> },
-    { id: "payments", text: "Payments", icon: <PaymentIcon /> },
-  ];
-
-  const drawer = (
-    <Box sx={{ height: "100%", overflow: "auto", bgcolor: "background.paper" }}>
-      <Toolbar />
-      <Box sx={{ p: 3 }}>
-        {/* User Info in Sidebar */}
-        <Box sx={{ mb: 3, textAlign: "center" }}>
-          <Avatar
-            src={learnerData.avatar}
-            sx={{
-              width: 64,
-              height: 64,
-              mx: "auto",
-              mb: 2,
-              border: "3px solid",
-              borderColor: "primary.main",
-              bgcolor: "#2ecc71",
-              color: "#222",
-              fontWeight: 700,
-              fontSize: 28,
-              textTransform: "uppercase",
-            }}
-          >
-            {!learnerData.avatar && userName ? userName.slice(0, 2).toUpperCase() : ""}
-          </Avatar>
-          <Typography variant="h6" fontWeight={600}>
-            {learnerData.name.split(" ")[0]}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {learnerData.level}
-          </Typography>
-          <Chip
-            label={`${learnerData.points} pts`}
-            color="primary"
-            size="small"
-            sx={{ mt: 1 }}
-          />
-        </Box>
-
-        <Divider sx={{ mb: 3 }} />
-
-        <List disablePadding>
-          {sidebarItems.map((item) => (
-            <ListItem
-              button
-              key={item.id}
-              onClick={() => {
-                setActiveSection(item.id);
-                if (isMobile) setMobileOpen(false);
-              }}
-              sx={{
-                backgroundColor: activeSection === item.id ? "primary.light" : "transparent",
-                "&:hover": {
-                  backgroundColor: activeSection === item.id ? "primary.light" : "grey.100",
-                },
-                borderRadius: 2,
-                mb: 1,
-                border: activeSection === item.id ? "2px solid" : "2px solid transparent",
-                borderColor: activeSection === item.id ? "primary.main" : "transparent",
-                transition: "all 0.3s ease",
-                px: 2,
-                py: 1.5,
-              }}
-            >
-              <ListItemIcon
+  // Chart components
+  const SimpleBarChart = ({ data }) => {
+    const maxHours = Math.max(...data.map(d => d.hours));
+    return (
+      <Box sx={{ p: 2 }}>
+        <Box display="flex" alignItems="end" gap={1} height={150} mb={2}>
+          {data.map((day, index) => (
+            <Box key={index} display="flex" flexDirection="column" alignItems="center" flex={1}>
+              <Box
                 sx={{
-                  color: activeSection === item.id ? "primary.dark" : "text.secondary",
-                  minWidth: 40,
+                  width: "100%",
+                  maxWidth: 40,
+                  height: `${(day.hours / maxHours) * 120}px`,
+                  bgcolor: theme.primary,
+                  borderRadius: 1,
+                  mb: 1,
+                  display: "flex",
+                  alignItems: "end",
+                  justifyContent: "center",
+                  color: "white",
+                  fontSize: "0.75rem",
+                  fontWeight: "bold",
+                  p: 0.5
                 }}
               >
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText
-                primary={item.text}
+                {day.hours}h
+              </Box>
+              <Typography variant="caption">{day.day}</Typography>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    );
+  };
+
+  const SimpleLineChart = ({ data }) => {
+    const maxValue = Math.max(...data.map(d => d.cumulative));
+    return (
+      <Box sx={{ p: 2 }}>
+        <Box display="flex" alignItems="end" gap={2} height={150} mb={2}>
+          {data.map((point, index) => (
+            <Box key={index} display="flex" flexDirection="column" alignItems="center" flex={1}>
+              <Box
                 sx={{
-                  color: activeSection === item.id ? "primary.dark" : "text.primary",
-                  "& .MuiListItemText-primary": {
-                    fontWeight: activeSection === item.id ? 600 : 400,
-                    fontSize: "0.95rem",
-                  },
+                  width: 8,
+                  height: 8,
+                  bgcolor: theme.primary,
+                  borderRadius: "50%",
+                  mb: `${150 - (point.cumulative / maxValue) * 120}px`,
+                  position: "relative"
                 }}
               />
+              <Typography variant="caption">{point.day}</Typography>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    );
+  };
+
+  const StatCard = ({ title, value, icon, color = theme.primary }) => (
+    <Card sx={{ height: "100%" }}>
+      <CardContent sx={{ p: 3, textAlign: "center" }}>
+        <Box sx={{ color, mb: 2 }}>
+          {icon}
+        </Box>
+        <Typography variant="h4" sx={{ color, fontWeight: "bold", mb: 1 }}>
+          {value}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {title}
+        </Typography>
+      </CardContent>
+    </Card>
+  );
+
+  const handleSaveGoal = () => {
+    setWeeklyGoal(newGoal);
+    setGoalDialog(false);
+    setNewGoal({ title: "", targetHours: 10, category: "" });
+  };
+
+  const handleEditDay = (dayIndex) => {
+    const day = dailyProgress[dayIndex];
+    setSelectedDay(dayIndex);
+    setEditDay({ hours: day.hours, task: day.task, completed: day.completed });
+    setEditDialog(true);
+  };
+
+  const handleSaveDay = () => {
+    const updated = [...dailyProgress];
+    updated[selectedDay] = { ...updated[selectedDay], ...editDay };
+    setDailyProgress(updated);
+    setEditDialog(false);
+  };
+
+  // Sidebar content
+  const drawer = (
+    <Box sx={{ height: "100%", bgcolor: theme.sidebarBg }}>
+      {/* User Profile Section */}
+      <Box sx={{ p: 3, borderBottom: "1px solid #e5e7eb" }}>
+        <Box display="flex" alignItems="center" gap={2}>
+          <Avatar 
+            src={userData.avatar} 
+            sx={{ width: 48, height: 48, bgcolor: theme.primary }}
+          >
+            {userData.name.charAt(0)}
+          </Avatar>
+          <Box>
+            <Typography variant="h6" fontWeight="600" sx={{ fontSize: "1rem" }}>
+              {userData.name}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {userData.level}
+            </Typography>
+            <Chip 
+              label={`${userData.points} pts`} 
+              size="small" 
+              sx={{ 
+                bgcolor: theme.primary, 
+                color: "white", 
+                fontSize: "0.75rem",
+                height: 20,
+                mt: 0.5
+              }} 
+            />
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Navigation Menu */}
+      <Box sx={{ p: 2 }}>
+        <List disablePadding>
+          {menuItems.map((item) => (
+            <ListItem
+              key={item.id}
+              button
+              onClick={() => {
+                if (item.active) {
+                  setActiveSection(item.id);
+                  if (isMobile) setMobileOpen(false);
+                }
+              }}
+              sx={{
+                borderRadius: 2,
+                mb: 1,
+                bgcolor: activeSection === item.id ? theme.primary : "transparent",
+                color: activeSection === item.id ? "white" : theme.textPrimary,
+                opacity: item.active ? 1 : 0.5,
+                cursor: item.active ? "pointer" : "not-allowed",
+                "&:hover": {
+                  bgcolor: item.active 
+                    ? (activeSection === item.id ? theme.primary : theme.sidebarHover)
+                    : "transparent"
+                },
+                transition: "all 0.2s ease"
+              }}
+            >
+              <ListItemIcon sx={{ 
+                color: activeSection === item.id ? "white" : theme.textSecondary,
+                minWidth: 40 
+              }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText 
+                primary={item.label}
+                sx={{
+                  "& .MuiListItemText-primary": {
+                    fontSize: "0.95rem",
+                    fontWeight: activeSection === item.id ? 600 : 400
+                  }
+                }}
+              />
+              {!item.active && (
+                <Typography variant="caption" sx={{ 
+                  bgcolor: "rgba(0,0,0,0.1)", 
+                  px: 1, 
+                  py: 0.25, 
+                  borderRadius: 1,
+                  fontSize: "0.7rem"
+                }}>
+                  Soon
+                </Typography>
+              )}
             </ListItem>
           ))}
         </List>
       </Box>
+
+      {/* Footer */}
+      <Box sx={{ mt: "auto", p: 3, borderTop: "1px solid #e5e7eb" }}>
+        <Typography variant="caption" color="text.secondary" align="center" display="block">
+          Learning Progress Tracker v1.0
+        </Typography>
+      </Box>
     </Box>
   );
 
+  // Main content renderer
   const renderContent = () => {
     switch (activeSection) {
       case "dashboard":
         return (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <Container maxWidth="xl" disableGutters>
-              <Box mb={4}>
-                <Typography variant="h4" gutterBottom color="primary" fontWeight="bold">
-                  Welcome back, {learnerData.name}! 👋
+          <Box>
+            <Typography variant="h4" fontWeight="bold" mb={1} sx={{ color: theme.primary }}>
+              Dashboard
+            </Typography>
+            <Typography variant="body1" color="text.secondary" mb={4}>
+              Welcome back! Here's your learning overview
+            </Typography>
+
+            <Grid container spacing={3} mb={4}>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard 
+                  title="Total Hours" 
+                  value={`${totalHours}h`} 
+                  icon={<ClockIcon sx={{ fontSize: 32 }} />}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard 
+                  title="Completed Days" 
+                  value={completedDays} 
+                  icon={<AwardIcon sx={{ fontSize: 32 }} />}
+                  color={theme.secondary}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard 
+                  title="Goal Progress" 
+                  value={`${progressPercent}%`} 
+                  icon={<GoalIcon sx={{ fontSize: 32 }} />}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard 
+                  title="Points" 
+                  value={userData.points} 
+                  icon={<AwardIcon sx={{ fontSize: 32 }} />}
+                  color={theme.secondary}
+                />
+              </Grid>
+            </Grid>
+
+            <Card>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" fontWeight="600" mb={2}>
+                  Current Weekly Goal
                 </Typography>
-                <Typography variant="body1" color="text.secondary" mb={2}>
-                  Continue your learning journey and track your progress
+                <Typography variant="h5" fontWeight="600" mb={1}>
+                  {weeklyGoal.title}
+                </Typography>
+                <Chip label={weeklyGoal.category} sx={{ mb: 2, bgcolor: theme.primary, color: "white" }} />
+                <LinearProgress 
+                  variant="determinate" 
+                  value={Math.min(progressPercent, 100)}
+                  sx={{ 
+                    height: 8, 
+                    borderRadius: 4,
+                    bgcolor: "grey.200",
+                    "& .MuiLinearProgress-bar": { bgcolor: theme.primary }
+                  }}
+                />
+                <Typography variant="body2" color="text.secondary" mt={1}>
+                  {totalHours}h of {weeklyGoal.targetHours}h completed ({progressPercent}%)
+                </Typography>
+              </CardContent>
+            </Card>
+          </Box>
+        );
+
+      case "goals":
+        return (
+          <Box>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+              <Box>
+                <Typography variant="h4" fontWeight="bold" sx={{ color: theme.primary }}>
+                  Weekly Goals
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                  Set and track your weekly learning objectives
                 </Typography>
               </Box>
+              <Button
+                variant="contained"
+                startIcon={<EditIcon />}
+                onClick={() => {
+                  setNewGoal(weeklyGoal);
+                  setGoalDialog(true);
+                }}
+                sx={{ bgcolor: theme.primary }}
+              >
+                Edit Goal
+              </Button>
+            </Box>
 
-              {/* Enhanced Stats Grid */}
-              <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid item xs={12} sm={6} lg={3}>
-                  <EnhancedStatCard
-                    title="Total Points"
-                    value={learnerData.points.toLocaleString()}
-                    icon={<TrophyIcon />}
-                    color="primary"
-                    subtitle={learnerData.rank}
-                    trend="+12%"
+            <Card>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" fontWeight="600" mb={1}>
+                  {weeklyGoal.title}
+                </Typography>
+                <Chip label={weeklyGoal.category} sx={{ mb: 3, bgcolor: theme.primary, color: "white" }} />
+                
+                <Box mb={3}>
+                  <Box display="flex" justifyContent="space-between" mb={1}>
+                    <Typography variant="body2">Progress</Typography>
+                    <Typography variant="body2" fontWeight="600">
+                      {totalHours}h / {weeklyGoal.targetHours}h ({progressPercent}%)
+                    </Typography>
+                  </Box>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={Math.min(progressPercent, 100)}
+                    sx={{ 
+                      height: 8, 
+                      borderRadius: 4,
+                      bgcolor: "grey.200",
+                      "& .MuiLinearProgress-bar": { bgcolor: theme.primary }
+                    }}
                   />
-                </Grid>
-                <Grid item xs={12} sm={6} lg={3}>
-                  <EnhancedStatCard
-                    title="Courses Completed"
-                    value={learnerData.completedCourses}
-                    icon={<SchoolIcon />}
-                    color="secondary"
-                    subtitle="This month: 2"
-                    trend="+25%"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} lg={3}>
-                  <EnhancedStatCard
-                    title="Active Projects"
-                    value={learnerData.activeProjects}
-                    icon={<ProjectIcon />}
-                    color="primary"
-                    subtitle="In collaboration"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} lg={3}>
-                  <EnhancedStatCard
-                    title="Learning Streak"
-                    value={`${learnerData.streak} days`}
-                    icon={<FireIcon />}
-                    color="secondary"
-                    subtitle="Keep it up!"
-                    trend="🔥"
-                  />
-                </Grid>
-              </Grid>
+                </Box>
 
-              <Grid container spacing={3} sx={{ mb: 4 }}>
-                {/* Quick Actions - Enhanced */}
-                <Grid item xs={12} lg={6}>
-                  <motion.div variants={itemVariants}>
-                    <Card sx={{ height: "100%" }}>
-                      <CardContent sx={{ p: 3 }}>
-                        <Box display="flex" alignItems="center" mb={3}>
-                          <SpeedIcon color="primary" sx={{ mr: 1 }} />
-                          <Typography variant="h6" fontWeight={600}>
-                            Quick Actions
-                          </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <Paper sx={{ p: 2, textAlign: "center", bgcolor: theme.background }}>
+                      <Typography variant="h5" sx={{ color: theme.primary, fontWeight: "bold" }}>
+                        {completedDays}
+                      </Typography>
+                      <Typography variant="body2">Days Completed</Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Paper sx={{ p: 2, textAlign: "center", bgcolor: theme.background }}>
+                      <Typography variant="h5" sx={{ color: theme.secondary, fontWeight: "bold" }}>
+                        {7 - completedDays}
+                      </Typography>
+                      <Typography variant="body2">Days Remaining</Typography>
+                    </Paper>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Box>
+        );
+
+      case "progress":
+        return (
+          <Box>
+            <Typography variant="h4" fontWeight="bold" mb={1} sx={{ color: theme.primary }}>
+              Daily Progress
+            </Typography>
+            <Typography variant="body1" color="text.secondary" mb={4}>
+              Track your daily learning hours and achievements
+            </Typography>
+            
+            <Grid container spacing={2}>
+              {dailyProgress.map((day, index) => (
+                <Grid item xs={12} key={index}>
+                  <Card>
+                    <CardContent sx={{ p: 2 }}>
+                      <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <Box display="flex" alignItems="center" gap={2}>
+                          <Box
+                            sx={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: "50%",
+                              bgcolor: day.completed ? theme.primary : theme.secondary
+                            }}
+                          />
+                          <Box>
+                            <Typography variant="subtitle1" fontWeight="600">
+                              {day.day} - {day.hours}h
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {day.task}
+                            </Typography>
+                          </Box>
                         </Box>
-                        <Grid container spacing={2}>
-                          <Grid item xs={6}>
-                            <Button
-                              fullWidth
-                              variant="outlined"
-                              startIcon={<SchoolIcon />}
-                              onClick={() => setActiveSection("courses")}
-                              sx={{ py: 1.5, flexDirection: isMobile ? "column" : "row" }}
-                            >
-                              Browse Courses
-                            </Button>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Button
-                              fullWidth
-                              variant="outlined"
-                              startIcon={<ProjectIcon />}
-                              onClick={() => setActiveSection("projects")}
-                              sx={{ py: 1.5, flexDirection: isMobile ? "column" : "row" }}
-                            >
-                              View Projects
-                            </Button>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Button
-                              fullWidth
-                              variant="outlined"
-                              startIcon={<GroupIcon />}
-                              onClick={() => setActiveSection("mentorship")}
-                              sx={{ py: 1.5, flexDirection: isMobile ? "column" : "row" }}
-                            >
-                              Get Mentorship
-                            </Button>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Button
-                              fullWidth
-                              variant="contained"
-                              startIcon={<WorkIcon />}
-                              onClick={() => setActiveSection("internships")}
-                              sx={{ py: 1.5, flexDirection: isMobile ? "column" : "row" }}
-                            >
-                              Find Internships
-                            </Button>
-                          </Grid>
-                        </Grid>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                </Grid>
-
-                {/* Skill Progress - Enhanced */}
-                <Grid item xs={12} lg={6}>
-                  <motion.div variants={itemVariants}>
-                    <Card sx={{ height: "100%" }}>
-                      <CardContent sx={{ p: 3 }}>
-                        <Box display="flex" alignItems="center" justify="space-between" mb={3}>
-                          <Box display="flex" alignItems="center">
-                            <TrendingUpIcon color="primary" sx={{ mr: 1 }} />
-                            <Typography variant="h6" fontWeight={600}>
-                              Skill Progress
-                            </Typography>
-                          </Box>
-                          <Button size="small" endIcon={<ArrowForwardIcon />}>
-                            View All
-                          </Button>
-                        </Box>
-                        {skills.slice(0, 4).map((skill, index) => (
-                          <Box key={index} sx={{ mb: 3 }}>
-                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                              <Typography variant="body1" fontWeight={500}>
-                                {skill.name}
-                              </Typography>
-                              <Box display="flex" alignItems="center" gap={1}>
-                                <Chip
-                                  label={skill.growth}
-                                  size="small"
-                                  color="success"
-                                  variant="outlined"
-                                />
-                                <Typography variant="body2" fontWeight={600}>
-                                  {skill.level}%
-                                </Typography>
-                              </Box>
-                            </Box>
-                            <LinearProgress
-                              variant="determinate"
-                              value={skill.level}
-                              sx={{
-                                height: 8,
-                                borderRadius: 4,
-                                bgcolor: "grey.200",
-                                "& .MuiLinearProgress-bar": {
-                                  borderRadius: 4,
-                                }
-                              }}
-                            />
-                          </Box>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                </Grid>
-              </Grid>
-
-              {/* Recent Activity - Enhanced */}
-              <motion.div variants={itemVariants}>
-                <Card>
-                  <CardContent sx={{ p: 3 }}>
-                    <Box display="flex" alignItems="center" mb={3}>
-                      <TimelineIcon color="primary" sx={{ mr: 1 }} />
-                      <Typography variant="h6" fontWeight={600}>
-                        Recent Activity
-                      </Typography>
-                    </Box>
-                    <Grid container spacing={2}>
-                      {[
-                        {
-                          icon: <TrophyIcon />,
-                          title: "Course Completed",
-                          desc: "Advanced React Development - Earned 250 points!",
-                          time: "2 hours ago",
-                          color: "primary",
-                        },
-                        {
-                          icon: <WorkIcon />,
-                          title: "Internship Applied",
-                          desc: "Junior Developer at TechStart Inc.",
-                          time: "1 day ago",
-                          color: "secondary",
-                        },
-                        {
-                          icon: <GroupIcon />,
-                          title: "Mentorship Session",
-                          desc: "Software Engineering with Sarah Williams",
-                          time: "3 days ago",
-                          color: "primary",
-                        },
-                      ].map((activity, index) => (
-                        <Grid item xs={12} md={4} key={index}>
-                          <Paper sx={{ p: 2, border: "1px solid", borderColor: "grey.200" }}>
-                            <Box display="flex" alignItems="start" gap={2}>
-                              <Avatar sx={{ bgcolor: `${activity.color}.main`, width: 40, height: 40 }}>
-                                {activity.icon}
-                              </Avatar>
-                              <Box flex={1}>
-                                <Typography variant="subtitle2" fontWeight={600} mb={0.5}>
-                                  {activity.title}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary" mb={1}>
-                                  {activity.desc}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {activity.time}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </Paper>
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Container>
-          </motion.div>
-        );
-
-      case "courses":
-        return (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <Container maxWidth="xl" disableGutters>
-              <Box mb={4}>
-                <Typography variant="h4" gutterBottom color="primary" fontWeight="bold">
-                  Learning Hub
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  Discover and continue your learning journey
-                </Typography>
-              </Box>
-
-              <Grid container spacing={3}>
-                {courses.map((course, index) => (
-                  <Grid item xs={12} sm={6} lg={4} key={index}>
-                    <motion.div variants={itemVariants} whileHover={cardHover}>
-                      <Card sx={{ height: "100%" }}>
-                        <CardContent sx={{ p: 3 }}>
-                          <Box display="flex" justify="space-between" alignItems="start" mb={2}>
-                            <BookmarkIcon color="action" />
-                            <Chip
-                              label={course.progress === 0 ? "New" : `${course.progress}%`}
-                              color={course.progress === 100 ? "success" : "primary"}
-                              size="small"
-                            />
-                          </Box>
-
-                          <Typography variant="h6" fontWeight={600} mb={1}>
-                            {course.title}
-                          </Typography>
-                          <Typography color="text.secondary" mb={2} variant="body2">
-                            by {course.instructor}
-                          </Typography>
-
-                          {course.progress > 0 && (
-                            <Box sx={{ mb: 2 }}>
-                              <LinearProgress
-                                variant="determinate"
-                                value={course.progress}
-                                sx={{ height: 6, borderRadius: 3, mb: 1 }}
-                              />
-                            </Box>
-                          )}
-
-                          <Box display="flex" justify="space-between" alignItems="center" mb={2}>
-                            <Box display="flex" alignItems="center" gap={1}>
-                              <StarIcon color="warning" sx={{ fontSize: 16 }} />
-                              <Typography variant="body2">{course.rating}</Typography>
-                            </Box>
-                            <Typography variant="body2" color="text.secondary">
-                              {course.duration}
-                            </Typography>
-                          </Box>
-
-                          <Typography variant="body2" color="text.secondary" mb={2}>
-                            {course.students.toLocaleString()} students
-                          </Typography>
-
-                          <Box display="flex" justify="space-between" alignItems="center">
-                            <Typography variant="h6" color="secondary.main" fontWeight={600}>
-                              {course.price.toLocaleString()} XAF
-                            </Typography>
-                          </Box>
-                        </CardContent>
-                        <CardActions sx={{ p: 3, pt: 0 }}>
-                          <Button
-                            fullWidth
-                            variant={course.progress > 0 ? "contained" : "outlined"}
-                            startIcon={course.progress > 0 ? <PlayArrowIcon /> : <SchoolIcon />}
-                          >
-                            {course.progress === 0 ? "Enroll Now" : course.progress === 100 ? "Review" : "Continue"}
-                          </Button>
-                        </CardActions>
-                      </Card>
-                    </motion.div>
-                  </Grid>
-                ))}
-              </Grid>
-            </Container>
-          </motion.div>
-        );
-
-      case "projects":
-        return (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <Container maxWidth="xl" disableGutters>
-              <Box mb={4}>
-                <Typography variant="h4" gutterBottom color="primary" fontWeight="bold">
-                  Project Workspace
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  Collaborate on real-world projects and build your portfolio
-                </Typography>
-              </Box>
-
-              <Grid container spacing={3}>
-                {projects.map((project, index) => (
-                  <Grid item xs={12} lg={6} key={index}>
-                    <motion.div variants={itemVariants} whileHover={cardHover}>
-                      <Card sx={{ height: "100%" }}>
-                        <CardContent sx={{ p: 3 }}>
-                          <Box display="flex" justify="space-between" alignItems="start" mb={2}>
-                            <Typography variant="h6" fontWeight={600}>
-                              {project.title}
-                            </Typography>
-                            <Chip
-                              label={project.status}
-                              color={
-                                project.status === "Completed" ? "success" :
-                                  project.status === "In Progress" ? "primary" : "default"
-                              }
-                              size="small"
-                            />
-                          </Box>
-
-                          <Typography variant="body2" color="text.secondary" mb={3}>
-                            {project.description}
-                          </Typography>
-
-                          {project.progress > 0 && (
-                            <Box mb={2}>
-                              <Box display="flex" justify="space-between" mb={1}>
-                                <Typography variant="body2">Progress</Typography>
-                                <Typography variant="body2">{project.progress}%</Typography>
-                              </Box>
-                              <LinearProgress
-                                variant="determinate"
-                                value={project.progress}
-                                sx={{ height: 6, borderRadius: 3 }}
-                              />
-                            </Box>
-                          )}
-
-                          <Box display="flex" gap={1} mb={2} flexWrap="wrap">
-                            {project.tech?.map((tech, idx) => (
-                              <Chip key={idx} label={tech} size="small" variant="outlined" />
-                            ))}
-                          </Box>
-
-                          <Box display="flex" justify="space-between" alignItems="center" mb={2}>
-                            <Typography variant="body2" color="text.secondary">
-                              👥 {project.team} members
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              ⏰ {project.deadline}
-                            </Typography>
-                          </Box>
-                        </CardContent>
-                        <CardActions sx={{ p: 3, pt: 0 }}>
-                          <Button startIcon={<LaunchIcon />} variant="outlined">
-                            View Project
-                          </Button>
-                          <Button variant="contained">
-                            Collaborate
-                          </Button>
-                        </CardActions>
-                      </Card>
-                    </motion.div>
-                  </Grid>
-                ))}
-              </Grid>
-            </Container>
-          </motion.div>
-        );
-
-      case "mentorship":
-        return (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <Container maxWidth="xl" disableGutters>
-              <Box mb={4}>
-                <Typography variant="h4" gutterBottom color="primary" fontWeight="bold">
-                  Mentorship Program
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  Connect with industry experts and accelerate your growth
-                </Typography>
-              </Box>
-
-              <Grid container spacing={3}>
-                {mentors.map((mentor, index) => (
-                  <Grid item xs={12} sm={6} lg={4} key={index}>
-                    <motion.div variants={itemVariants} whileHover={cardHover}>
-                      <Card sx={{ height: "100%" }}>
-                        <CardContent sx={{ p: 3 }}>
-                          <Box display="flex" alignItems="center" mb={3}>
-                            <Avatar
-                              src={mentor.avatar}
-                              sx={{ width: 60, height: 60, mr: 2 }}
-                            />
-                            <Box>
-                              <Typography variant="h6" fontWeight={600}>
-                                {mentor.name}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {mentor.expertise}
-                              </Typography>
-                            </Box>
-                          </Box>
-
-                          <Box display="flex" alignItems="center" mb={2}>
-                            <StarIcon color="warning" sx={{ fontSize: 16, mr: 0.5 }} />
-                            <Typography variant="body2" mr={2}>{mentor.rating}</Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {mentor.sessions} sessions completed
-                            </Typography>
-                          </Box>
-
-                          <Box display="flex" gap={1} mb={2} flexWrap="wrap">
-                            {mentor.specialties.map((specialty, idx) => (
-                              <Chip key={idx} label={specialty} size="small" variant="outlined" />
-                            ))}
-                          </Box>
-
-                          <Typography variant="h6" color="secondary.main" fontWeight={600} mb={2}>
-                            {mentor.price}
-                          </Typography>
-                        </CardContent>
-                        <CardActions sx={{ p: 3, pt: 0 }}>
-                          <Button fullWidth variant="outlined" startIcon={<GroupIcon />}>
-                            Book Session
-                          </Button>
-                        </CardActions>
-                      </Card>
-                    </motion.div>
-                  </Grid>
-                ))}
-              </Grid>
-            </Container>
-          </motion.div>
-        );
-
-      case "internships":
-        return (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <Container maxWidth="xl" disableGutters>
-              <Box mb={4}>
-                <Typography variant="h4" gutterBottom color="primary" fontWeight="bold">
-                  Internship Tracker
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  Track your internship applications and discover new opportunities
-                </Typography>
-              </Box>
-
-              <Grid container spacing={3}>
-                {internships.map((internship, index) => (
-                  <Grid item xs={12} lg={6} key={index}>
-                    <motion.div variants={itemVariants} whileHover={cardHover}>
-                      <Card sx={{ height: "100%" }}>
-                        <CardContent sx={{ p: 3 }}>
-                          <Box display="flex" justify="space-between" alignItems="start" mb={2}>
-                            <Typography variant="h6" fontWeight={600}>
-                              {internship.title}
-                            </Typography>
-                            <Chip
-                              label={internship.status}
-                              color={
-                                internship.status === "Applied" ? "primary" :
-                                  internship.status === "Interview Scheduled" ? "warning" : "default"
-                              }
-                              size="small"
-                            />
-                          </Box>
-
-                          <Box display="flex" alignItems="center" mb={2}>
-                            <BusinessIcon sx={{ fontSize: 16, mr: 1, color: "text.secondary" }} />
-                            <Typography variant="body2" color="text.secondary">
-                              {internship.company}
-                            </Typography>
-                          </Box>
-
-                          <Box display="flex" alignItems="center" mb={2}>
-                            <Typography variant="body2" color="text.secondary" mr={2}>
-                              📍 {internship.location}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              ⏱️ {internship.duration}
-                            </Typography>
-                          </Box>
-
-                          <Typography variant="h6" color="secondary.main" fontWeight={600} mb={2}>
-                            {internship.salary}
-                          </Typography>
-
-                          <Box display="flex" gap={1} mb={2} flexWrap="wrap">
-                            {internship.skills.map((skill, idx) => (
-                              <Chip key={idx} label={skill} size="small" variant="outlined" />
-                            ))}
-                          </Box>
-
-                          <Typography variant="body2" color="text.secondary">
-                            Applied: {new Date(internship.appliedDate).toLocaleDateString()}
-                          </Typography>
-                        </CardContent>
-                        <CardActions sx={{ p: 3, pt: 0 }}>
-                          <Button startIcon={<LaunchIcon />} variant="outlined">
-                            View Details
-                          </Button>
-                          <Button variant="contained">
-                            Follow Up
-                          </Button>
-                        </CardActions>
-                      </Card>
-                    </motion.div>
-                  </Grid>
-                ))}
-              </Grid>
-            </Container>
-          </motion.div>
-        );
-
-      case "payments":
-        return (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <Container maxWidth="xl" disableGutters>
-              <Box mb={4}>
-                <Typography variant="h4" gutterBottom color="primary" fontWeight="bold">
-                  Payment Center
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  Manage your payments and billing information
-                </Typography>
-              </Box>
-
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <Card>
-                    <CardContent sx={{ p: 3 }}>
-                      <Typography variant="h6" fontWeight={600} mb={3}>
-                        Payment History
-                      </Typography>
-                      <List>
-                        {[
-                          { course: "Advanced React Development", amount: "45,000 XAF", date: "Jan 15, 2024", status: "Completed" },
-                          { course: "Full Stack JavaScript", amount: "65,000 XAF", date: "Jan 10, 2024", status: "Completed" },
-                          { course: "Mentorship Session", amount: "15,000 XAF", date: "Jan 8, 2024", status: "Completed" },
-                        ].map((payment, index) => (
-                          <ListItem key={index} divider>
-                            <ListItemText
-                              primary={payment.course}
-                              secondary={`${payment.date} • ${payment.amount}`}
-                            />
-                            <Chip label={payment.status} color="success" size="small" />
-                          </ListItem>
-                        ))}
-                      </List>
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Card>
-                    <CardContent sx={{ p: 3 }}>
-                      <Typography variant="h6" fontWeight={600} mb={3}>
-                        Quick Payment
-                      </Typography>
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        size="large"
-                        startIcon={<PaymentIcon />}
-                        onClick={() => setPaymentDialog(true)}
-                        sx={{ mb: 2 }}
-                      >
-                        Add Payment Method
-                      </Button>
-                      <Typography variant="body2" color="text.secondary" textAlign="center">
-                        Secure payments powered by trusted providers
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-            </Container>
-          </motion.div>
-        );
-
-      case "profile":
-        return (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <Container sx={{ maxWidth: "none" }} disableGutters>
-              <Box mb={4}>
-                <Typography variant="h4" gutterBottom color="primary" fontWeight="bold">
-                  My Profile
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  Manage your profile and account settings
-                </Typography>
-              </Box>
-
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={4}>
-                  <Card>
-                    <CardContent sx={{ p: 3, textAlign: "center" }}>
-                      <Avatar
-                        src={learnerData.avatar}
-                        sx={{
-                          width: 120,
-                          height: 120,
-                          mx: "auto",
-                          mb: 2,
-                          border: "3px solid",
-                          borderColor: "primary.main",
-                          bgcolor: "#2ecc71",
-                          color: "#222",
-                          fontWeight: 700,
-                          fontSize: 48,
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {!learnerData.avatar && userName ? userName.slice(0, 2).toUpperCase() : ""}
-                      </Avatar>
-                      <Typography variant="h5" fontWeight={600} mb={1}>
-                        {learnerData.name}
-                      </Typography>
-                      <Typography variant="body1" color="text.secondary" mb={2}>
-                        {learnerData.level} Learner
-                      </Typography>
-                      <Chip label={`${learnerData.points} Points`} color="primary" />
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                <Grid item xs={12} md={8}>
-                  <Card>
-                    <CardContent sx={{ p: 3 }}>
-                      <Typography variant="h6" fontWeight={600} mb={3}>
-                        Profile Information
-                      </Typography>
-                      <Grid container spacing={3}>
-                        <Grid item xs={12} sm={6}>
-                          <TextField
-                            fullWidth
-                            label="Full Name"
-                            defaultValue={learnerData.name}
-                            variant="outlined"
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <TextField
-                            fullWidth
-                            label="Email"
-                            defaultValue="tayo.mbah@example.com"
-                            variant="outlined"
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <TextField
-                            fullWidth
-                            label="Phone"
-                            defaultValue="+237 6XX XXX XXX"
-                            variant="outlined"
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <TextField
-                            fullWidth
-                            label="Location"
-                            defaultValue="Douala, Cameroon"
-                            variant="outlined"
-                          />
-                        </Grid>
-                        <Grid item xs={12}>
-                          <TextField
-                            fullWidth
-                            label="Bio"
-                            defaultValue="Passionate learner focused on software development and entrepreneurship."
-                            multiline
-                            rows={4}
-                            variant="outlined"
-                          />
-                        </Grid>
-                      </Grid>
-                      <Box mt={3}>
-                        <Button variant="contained" sx={{ mr: 2 }}>
-                          Save Changes
-                        </Button>
-                        <Button variant="outlined">
-                          Cancel
-                        </Button>
+                        <IconButton size="small" onClick={() => handleEditDay(index)}>
+                          <EditIcon />
+                        </IconButton>
                       </Box>
                     </CardContent>
                   </Card>
                 </Grid>
+              ))}
+            </Grid>
+          </Box>
+        );
+
+      case "reports":
+        return (
+          <Box>
+            <Typography variant="h4" fontWeight="bold" mb={1} sx={{ color: theme.primary }}>
+              Weekly Reports
+            </Typography>
+            <Typography variant="body1" color="text.secondary" mb={4}>
+              Analyze your learning progress and trends
+            </Typography>
+            
+            <Grid container spacing={3} mb={3}>
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" mb={2}>Daily Hours</Typography>
+                    <SimpleBarChart data={dailyProgress} />
+                  </CardContent>
+                </Card>
               </Grid>
-            </Container>
-          </motion.div>
+              
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" mb={2}>Progress Trend</Typography>
+                    <SimpleLineChart data={dailyProgress.map((day, i) => ({
+                      ...day,
+                      cumulative: dailyProgress.slice(0, i + 1).reduce((sum, d) => sum + d.hours, 0)
+                    }))} />
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={4}>
+                <StatCard 
+                  title="Total Hours" 
+                  value={`${totalHours}h`} 
+                  icon={<ClockIcon sx={{ fontSize: 32 }} />}
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <StatCard 
+                  title="Completion Rate" 
+                  value={`${Math.round((completedDays/7)*100)}%`} 
+                  icon={<AwardIcon sx={{ fontSize: 32 }} />}
+                  color={theme.secondary}
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <StatCard 
+                  title="Goal Progress" 
+                  value={`${progressPercent}%`} 
+                  icon={<GoalIcon sx={{ fontSize: 32 }} />}
+                />
+              </Grid>
+            </Grid>
+          </Box>
         );
 
       default:
-        return null;
+        return (
+          <Box textAlign="center" py={8}>
+            <Typography variant="h5" color="text.secondary" mb={2}>
+              Coming Soon
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              This feature is under development
+            </Typography>
+          </Box>
+        );
     }
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
-        {/* Enhanced App Bar */}
-        <AppBar
-          position="fixed"
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: theme.background }}>
+      {/* App Bar for Mobile */}
+      <AppBar
+        position="fixed"
+        sx={{
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          ml: { md: `${drawerWidth}px` },
+          bgcolor: "white",
+          color: theme.textPrimary,
+          boxShadow: 1,
+          display: { md: "none" }
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            edge="start"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" fontWeight="600">
+            Learning Progress
+          </Typography>
+        </Toolbar>
+      </AppBar>
+
+
+      {/* Sidebar */}
+      <Box
+        component="nav"
+        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
+      >
+        {/* Mobile drawer */}
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={() => setMobileOpen(false)}
+          ModalProps={{ keepMounted: true }}
           sx={{
-            zIndex: (theme) => theme.zIndex.drawer + 1,
-            bgcolor: "white",
-            color: "text.primary",
-            boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
-            borderBottom: "1px solid",
-            borderColor: "grey.200",
+            display: { xs: "block", md: "none" },
+            "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth }
           }}
         >
-          <Toolbar>
-            <IconButton
-              edge="start"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              sx={{ mr: 2, display: { md: "none" } }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700, color: "primary.main" }}>
-              TechBridge
-            </Typography>
-            <Badge badgeContent={3} color="error">
-              <IconButton>
-                <NotificationIcon />
-              </IconButton>
-            </Badge>
-          </Toolbar>
-        </AppBar>
+          {drawer}
+        </Drawer>
 
-        {/* Enhanced Sidebar */}
-        <Box
-          component="nav"
-          sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
-        >
-          <Drawer
-            variant="temporary"
-            open={mobileOpen}
-            onClose={() => setMobileOpen(false)}
-            ModalProps={{ keepMounted: true }}
-            sx={{
-              display: { xs: "block", md: "none" },
-              "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth },
-            }}
-          >
-            {drawer}
-          </Drawer>
-          <Drawer
-            variant="permanent"
-            sx={{
-              display: { xs: "none", md: "block" },
-              "& .MuiDrawer-paper": {
-                boxSizing: "border-box",
-                width: drawerWidth,
-                borderRight: "1px solid",
-                borderColor: "grey.200",
-              },
-            }}
-            open
-          >
-            {drawer}
-          </Drawer>
-        </Box>
-
-        {/* Main Content */}
-        <Box
-          component="main"
+        {/* Desktop drawer */}
+        <Drawer
+          variant="permanent"
           sx={{
-            flexGrow: 1,
-            p: { xs: 2, md: 4 },
-            width: { md: `calc(100% - ${drawerWidth}px)` },
-            mt: "64px",
+            display: { xs: "none", md: "block" },
+            "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth }
           }}
-        >
-          {renderContent()}
-        </Box>
+          open
 
-        {/* Payment Dialog */}
-        <Dialog
-          open={paymentDialog}
-          onClose={() => setPaymentDialog(false)}
-          maxWidth="sm"
-          fullWidth
         >
-          <DialogTitle>Add Payment Method</DialogTitle>
-          <DialogContent>
-            <Typography variant="body2" color="text.secondary" mb={2}>
-              Choose your preferred payment method
-            </Typography>
-            <Stack spacing={2}>
-              <Button variant="outlined" fullWidth startIcon={<PaymentIcon />}>
-                Mobile Money (MTN/Orange)
-              </Button>
-              <Button variant="outlined" fullWidth startIcon={<PaymentIcon />}>
-                Bank Transfer
-              </Button>
-              <Button variant="outlined" fullWidth startIcon={<PaymentIcon />}>
-                Credit/Debit Card
-              </Button>
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setPaymentDialog(false)}>Cancel</Button>
-            <Button variant="contained">Continue</Button>
-          </DialogActions>
-        </Dialog>
+          {drawer}
+        </Drawer>
       </Box>
-    </ThemeProvider>
+
+      {/* Main content */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          mt: { xs: 8, md: 0 }
+        }}
+      >
+        <Container maxWidth="xl" disableGutters>
+          {renderContent()}
+        </Container>
+      </Box>
+
+      {/* Dialogs */}
+      <Dialog open={goalDialog} onClose={() => setGoalDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Set Weekly Goal</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Goal Title"
+            value={newGoal.title}
+            onChange={(e) => setNewGoal({...newGoal, title: e.target.value})}
+            sx={{ mb: 2, mt: 1 }}
+          />
+          <TextField
+            fullWidth
+            label="Category"
+            value={newGoal.category}
+            onChange={(e) => setNewGoal({...newGoal, category: e.target.value})}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            type="number"
+            label="Target Hours"
+            value={newGoal.targetHours}
+            onChange={(e) => setNewGoal({...newGoal, targetHours: parseInt(e.target.value) || 0})}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setGoalDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={handleSaveGoal} 
+            variant="contained"
+            sx={{ bgcolor: theme.primary }}
+          >
+            Save Goal
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={editDialog} onClose={() => setEditDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Daily Progress</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            type="number"
+            label="Hours"
+            value={editDay.hours}
+            onChange={(e) => setEditDay({...editDay, hours: parseFloat(e.target.value) || 0})}
+            sx={{ mb: 2, mt: 1 }}
+          />
+          <TextField
+            fullWidth
+            label="Task/Achievement"
+            value={editDay.task}
+            onChange={(e) => setEditDay({...editDay, task: e.target.value})}
+            multiline
+            rows={2}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={handleSaveDay} 
+            variant="contained"
+            sx={{ bgcolor: theme.primary }}
+          >
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }
 
-export default LearnerDashboard;
+export default LearningDashboard;
