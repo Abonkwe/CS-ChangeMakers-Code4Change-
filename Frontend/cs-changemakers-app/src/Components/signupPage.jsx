@@ -32,6 +32,7 @@ import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 // Create custom theme with emerald green color
 const theme = createTheme({
@@ -119,6 +120,7 @@ const SignupPage = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const navigate = useNavigate();
 
   // Responsive breakpoints
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -174,21 +176,32 @@ const SignupPage = () => {
     setSuccessMsg("");
     try {
       const res = await axios.post("http://localhost:5002/login", {
-        name: values.name, // Now using name directly
+        name: values.name,
         password: values.password,
-        role: "learner", // or "mentor" if you want to support mentor login
+        role: "learner",
       });
-      console.log("Login response:", res.data); // <-- Console log backend response
+      console.log("Login response:", res.data);
       if (res.data.access_token) {
+        // Save all user info to localStorage
         localStorage.setItem("access_token", res.data.access_token);
+        localStorage.setItem("user_id", res.data.id);
+        localStorage.setItem("user_name", res.data.name);
+        localStorage.setItem("user_tel", res.data.tel);
+        if (res.data.email) localStorage.setItem("user_email", res.data.email);
+        if (res.data.role) localStorage.setItem("user_role", res.data.role);
+        if (res.data.link) localStorage.setItem("user_link", res.data.link);
+
         setSuccessMsg("Login successful!");
-        // Redirect or update UI as needed
+        // Redirect to home page after a short delay
+        setTimeout(() => {
+          navigate("/");
+        }, 800);
       }
     } catch (err) {
       setErrorMsg(
         err.response?.data?.message || "Login failed. Please try again."
       );
-      console.log("Login error:", err.response?.data || err.message); // <-- Log error
+      console.log("Login error:", err.response?.data || err.message);
     }
     setLoading(false);
     setSubmitting(false);

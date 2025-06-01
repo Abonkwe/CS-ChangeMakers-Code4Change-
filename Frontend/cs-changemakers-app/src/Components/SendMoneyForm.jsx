@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Alert,
   Box,
@@ -14,28 +15,79 @@ import {
   CardContent,
   Avatar,
   Chip,
+  Divider,
+  Paper,
+  useTheme,
+  useMediaQuery,
+  Grid,
+  Container,
 } from "@mui/material";
-import { 
-  AccountBalanceWallet, 
-  Phone, 
-  Send, 
-  Receipt,
-  SwapHoriz,
+import {
+  AccountBalanceWallet,
+  Phone,
+  Send,
+  TrendingUp,
   CheckCircle,
-  Error as ErrorIcon
+  Error as ErrorIcon,
+  Person,
+  AccountBalance,
+  InfoOutlined
 } from "@mui/icons-material";
 
 const SendMoneyForm = () => {
   const [amount, setAmount] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [paymentType, setPaymentType] = useState("");
-  const [operator, setOperator] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("2376"); // Pre-fill with 2376
+  const [recipientNumber, setRecipientNumber] = useState("2376"); // Optional: also pre-fill recipient
+  const [paymentType, setPaymentType] = useState("disburse");
+  const [operator, setOperator] = useState("mtn"); // Set MTN as default
   const [message, setMessage] = useState("");
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [paymentId, setPaymentId] = useState("");
 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+
   const apiKey = "qnoYzuMb4JOdAxNpzo42T";
+  const feePercentage = 10; // 10% fee
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
+  const buttonVariants = {
+    hover: {
+      scale: 1.02,
+      boxShadow: "0 12px 40px rgba(102, 126, 234, 0.4)",
+      transition: { duration: 0.2 }
+    },
+    tap: { scale: 0.98 }
+  };
+
+  // Calculate fee breakdown
+  const calculateFees = (inputAmount) => {
+    const total = Number(inputAmount) || 0;
+    const fee = Math.round(total * (feePercentage / 100));
+    const receiverAmount = total - fee;
+    return { total, fee, receiverAmount };
+  };
+
+  const { total, fee, receiverAmount } = calculateFees(amount);
 
   const handleSubmit = async () => {
     setMessage("");
@@ -50,13 +102,13 @@ const SendMoneyForm = () => {
     }
 
     if (!cameroonPhoneRegex.test(phoneNumber)) {
-      setMessage("Enter a valid Cameroon phone number (e.g. 237650000000)");
+      setMessage("Enter a valid sender Cameroon phone number (e.g. 237650000000)");
       setError(true);
       return;
     }
 
-    if (!paymentType) {
-      setMessage("Please select a payment type");
+    if (!cameroonPhoneRegex.test(recipientNumber)) {
+      setMessage("Enter a valid recipient Cameroon phone number (e.g. 237650000000)");
       setError(true);
       return;
     }
@@ -67,61 +119,107 @@ const SendMoneyForm = () => {
       return;
     }
 
-    // Determine API endpoint and payment type based on selection
-    const apiEndpoint = paymentType === "disburse" 
-      ? "https://api.pay.mynkwa.com/collect" 
-      : "https://api.pay.mynkwa.com/disburse";
-    
-    const actualPaymentType = paymentType === "disburse" ? "collection" : "disbursement";
-
-    const paymentData = {
-      amount: Number(amount),
-      phoneNumber: phoneNumber.trim(),
-      telecomOperator: operator,
-      paymentType: actualPaymentType,
-    };
+    // 1. Collect money from sender
+    const collectEndpoint = "https://api.pay.mynkwa.com/collect";
+    const disburseEndpoint = "https://api.pay.mynkwa.com/disburse";
 
     setLoading(true);
+    setMessage("");
+    setError(false);
 
     try {
-      const response = await fetch(apiEndpoint, {
+      // 1. Initiate collection
+      const collectRes = await fetch(collectEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-API-Key": apiKey,
         },
-        body: JSON.stringify(paymentData),
+        body: JSON.stringify({
+          amount: total,
+          phoneNumber: phoneNumber.trim(),
+          telecomOperator: operator,
+          paymentType: "collection",
+        }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      const collectData = await collectRes.json();
+
+      console.log("Collect API response:", collectData); // <-- Log the data returned after the first transaction
+
+      if (!collectRes.ok) {
+        throw new Error(collectData.message || `Collect failed: ${collectRes.status}`);
       }
 
-      const data = await response.json();
-      const { id, status, amount, telecomOperator, createdAt } = data;
+      // Store collection id in localStorage
+      localStorage.setItem("nkwa_collection_id", collectData.id);
 
-      setPaymentId(id);
+      // Save a new ID
+      const ids = JSON.parse(localStorage.getItem("nkwa_collection_ids") || "[]");
+      ids.push(collectData.id);
+      localStorage.setItem("nkwa_collection_ids", JSON.stringify(ids));
 
-      const actionText = paymentType === "disburse" ? "Money Sent" : "Payment Collected";
+      setMessage("Please check your phone and authorize the payment by entering your PIN. Waiting for payment confirmation...");
+      setError(false);
+
+      // Poll for collection status
+      let status = collectData.status;
+      let pollCount = 0;
+      const maxPolls = 1000; // ~75 seconds
+      while (status === "pending" && pollCount < maxPolls) {
+        await new Promise((res) => setTimeout(res, 5000)); // wait 5 seconds
+        const statusRes = await fetch(`https://api.pay.mynkwa.com/payments/${collectData.id}`, {
+          method: "GET", // <-- Use POST instead of GET
+          headers: { "X-API-Key": apiKey }
+        });
+        const statusData = await statusRes.json();
+        status = statusData.status;
+        pollCount++;
+        if (status === "success") break;
+        if (status === "failed" || status === "canceled") {
+          throw new Error("Collection failed or was canceled. Disbursement cancelled.");
+        }
+      }
+
+      if (status !== "success") {
+        throw new Error("Payment not authorized or timed out. Disbursement cancelled.");
+      }
+
+      // 3. Disburse to recipient (only if status is success)
+      const disburseRes = await fetch(disburseEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": apiKey,
+        },
+        body: JSON.stringify({
+          amount: receiverAmount,
+          phoneNumber: recipientNumber.trim(),
+          telecomOperator: operator,
+          paymentType: "disbursement",
+        }),
+      });
+
+      const disburseData = await disburseRes.json();
+
+      if (!disburseRes.ok) {
+        throw new Error(disburseData.message || `Disburse failed: ${disburseRes.status}`);
+      }
+
       setMessage(
-        `✅ ${actionText} Successfully!\n` +
-        `🆔 Payment ID: ${id}\n` +
-        `📱 Phone: ${phoneNumber}\n` +
-        `💰 Amount: ${amount} FCFA\n` +
-        `📡 Operator: ${telecomOperator.toUpperCase()}\n` +
-        `📝 Type: ${paymentType.toUpperCase()}\n` +
-        `📅 Created At: ${new Date(createdAt).toLocaleString()}\n` +
-        `📈 Status: ${status.toUpperCase()}`
+        `✅ Payment successful!\n` +
+        `Collected ${total.toLocaleString()} FCFA from sender (${phoneNumber})\n` +
+        `Sent ${receiverAmount.toLocaleString()} FCFA to recipient (${recipientNumber})`
       );
       setError(false);
 
+      // Reset form
       setAmount("");
       setPhoneNumber("");
-      setPaymentType("");
+      setRecipientNumber("");
       setOperator("");
+      localStorage.removeItem("nkwa_collection_id");
     } catch (error) {
-      console.error("Payment error:", error);
       setMessage(`❌ Payment error: ${error.message}`);
       setError(true);
     } finally {
@@ -132,339 +230,438 @@ const SendMoneyForm = () => {
   return (
     <Box
       sx={{
-        width: "95vw",
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        p: 2,
+        background: "#2ecc71", // Solid emerald green background
+        py: { xs: 2, sm: 4 },
+        px: { xs: 1, sm: 2 },
       }}
     >
-      <Box sx={{ width: "100%", maxWidth: 480 }}>
-        {/* Header Section */}
-        <Box sx={{ textAlign: "center", mb: 4 }}>
-          <Avatar
-            sx={{
-              width: 80,
-              height: 80,
-              margin: "0 auto 16px",
-              background: "linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)",
-              boxShadow: "0 8px 32px rgba(46, 204, 113, 0.3)",
-            }}
-          >
-            <AccountBalanceWallet sx={{ fontSize: 40 }} />
-          </Avatar>
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: "bold",
-              color: "#2c3e50",
-              mb: 1,
-              background: "linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            Payment Gateway
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Send or collect mobile money payments securely
-          </Typography>
-        </Box>
-
-        {/* Main Form Card */}
-        <Card
-          elevation={12}
-          sx={{
-            borderRadius: 4,
-            overflow: "visible",
-            background: "rgba(255, 255, 255, 0.95)",
-            backdropFilter: "blur(20px)",
-            border: "1px solid rgba(255, 255, 255, 0.2)",
-          }}
+      <Container maxWidth="sm">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
         >
-          <CardContent sx={{ p: 4 }}>
-            {/* Payment Type Selection */}
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel
-                id="payment-type-label"
-                sx={{ 
-                  color: "#2ecc71",
-                  "&.Mui-focused": { color: "#2ecc71" }
-                }}
+          {/* Header Section */}
+          <motion.div variants={itemVariants}>
+            <Box sx={{ textAlign: "center", mb: { xs: 3, sm: 4 } }}>
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                whileTap={{ scale: 0.9 }}
               >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <SwapHoriz sx={{ mr: 1, fontSize: 20 }} />
-                  Payment Type
-                </Box>
-              </InputLabel>
-              <Select
-                labelId="payment-type-label"
-                value={paymentType}
-                label="Payment Type"
-                onChange={(e) => setPaymentType(e.target.value)}
-                required
-                sx={{
-                  backgroundColor: "#f8fffe",
-                  "& .MuiOutlinedInput-root": {
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#2ecc71",
-                      borderWidth: 2,
-                    },
-                  },
-                }}
-              >
-                <MenuItem value="disburse">
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Send sx={{ mr: 2, color: "#2ecc71" }} />
-                    Disburse (Send Money)
-                  </Box>
-                </MenuItem>
-                <MenuItem value="collect">
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Receipt sx={{ mr: 2, color: "#2ecc71" }} />
-                    Collect (Request Payment)
-                  </Box>
-                </MenuItem>
-              </Select>
-            </FormControl>
-
-            {/* Payment Summary Chip */}
-            {paymentType && (
-              <Box sx={{ mb: 3, display: "flex", justifyContent: "center" }}>
-                <Chip
-                  icon={paymentType === "disburse" ? <Send /> : <Receipt />}
-                  label={
-                    paymentType === "disburse" 
-                      ? "You will send money to the specified phone number" 
-                      : "You will request payment from the specified phone number"
-                  }
+                <Avatar
                   sx={{
-                    backgroundColor: "#e8f8f5",
-                    color: "#2ecc71",
-                    fontWeight: "medium",
-                    py: 1,
-                    "& .MuiChip-icon": { color: "#2ecc71" }
-                  }}
-                />
-              </Box>
-            )}
-
-            {/* Amount Field */}
-            <TextField
-              fullWidth
-              label="Amount (FCFA)"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              type="number"
-              required
-              sx={{
-                mb: 3,
-                "& .MuiInputLabel-root": {
-                  color: "#2ecc71",
-                  "&.Mui-focused": { color: "#2ecc71" }
-                },
-                "& .MuiOutlinedInput-root": {
-                  backgroundColor: "#f8fffe",
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#2ecc71",
-                    borderWidth: 2,
-                  },
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <AccountBalanceWallet sx={{ color: "#2ecc71", mr: 1 }} />
-                ),
-              }}
-            />
-
-            {/* Phone Number Field */}
-            <TextField
-              fullWidth
-              label="Phone Number (e.g. 237650000000)"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              required
-              sx={{
-                mb: 3,
-                "& .MuiInputLabel-root": {
-                  color: "#2ecc71",
-                  "&.Mui-focused": { color: "#2ecc71" }
-                },
-                "& .MuiOutlinedInput-root": {
-                  backgroundColor: "#f8fffe",
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#2ecc71",
-                    borderWidth: 2,
-                  },
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <Phone sx={{ color: "#2ecc71", mr: 1 }} />
-                ),
-              }}
-            />
-
-            {/* Operator Selection */}
-            <FormControl fullWidth sx={{ mb: 4 }}>
-              <InputLabel
-                id="operator-label"
-                sx={{ 
-                  color: "#2ecc71",
-                  "&.Mui-focused": { color: "#2ecc71" }
-                }}
-              >
-                Telecom Operator
-              </InputLabel>
-              <Select
-                labelId="operator-label"
-                value={operator}
-                label="Telecom Operator"
-                onChange={(e) => setOperator(e.target.value)}
-                required
-                sx={{
-                  backgroundColor: "#f8fffe",
-                  "& .MuiOutlinedInput-root": {
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#2ecc71",
-                      borderWidth: 2,
-                    },
-                  },
-                }}
-              >
-                <MenuItem value="mtn">
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Box
-                      sx={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: "50%",
-                        backgroundColor: "#ffcc00",
-                        mr: 2,
-                      }}
-                    />
-                    MTN
-                  </Box>
-                </MenuItem>
-                <MenuItem value="orange">
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Box
-                      sx={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: "50%",
-                        backgroundColor: "#ff6600",
-                        mr: 2,
-                      }}
-                    />
-                    Orange
-                  </Box>
-                </MenuItem>
-              </Select>
-            </FormControl>
-
-            {/* Submit Button */}
-            <Button
-              onClick={handleSubmit}
-              disabled={loading}
-              fullWidth
-              variant="contained"
-              size="large"
-              sx={{
-                py: 2,
-                fontSize: "1.1rem",
-                fontWeight: "bold",
-                borderRadius: 3,
-                background: "linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)",
-                boxShadow: "0 8px 32px rgba(46, 204, 113, 0.3)",
-                textTransform: "none",
-                "&:hover": {
-                  background: "linear-gradient(135deg, #27ae60 0%, #229954 100%)",
-                  boxShadow: "0 12px 40px rgba(46, 204, 113, 0.4)",
-                  transform: "translateY(-2px)",
-                },
-                "&:active": {
-                  transform: "translateY(0px)",
-                },
-                "&.Mui-disabled": {
-                  background: "#bdc3c7",
-                  color: "white",
-                },
-                transition: "all 0.3s ease",
-              }}
-              startIcon={
-                loading ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : paymentType === "disburse" ? (
-                  <Send />
-                ) : paymentType === "collect" ? (
-                  <Receipt />
-                ) : (
-                  <SwapHoriz />
-                )
-              }
-            >
-              {loading
-                ? "Processing..."
-                : paymentType === "disburse"
-                ? "Send Money"
-                : paymentType === "collect"
-                ? "Request Payment"
-                : "Process Payment"}
-            </Button>
-
-            {/* Message Display */}
-            {message && (
-              <Box sx={{ mt: 3 }}>
-                <Alert
-                  severity={error ? "error" : "success"}
-                  icon={error ? <ErrorIcon /> : <CheckCircle />}
-                  sx={{
-                    borderRadius: 2,
-                    "& .MuiAlert-message": {
-                      whiteSpace: "pre-line",
-                      fontWeight: "medium",
-                    },
-                    ...(error
-                      ? {
-                          backgroundColor: "#ffebee",
-                          color: "#c62828",
-                          "& .MuiAlert-icon": { color: "#c62828" },
-                        }
-                      : {
-                          backgroundColor: "#e8f8f5",
-                          color: "#2e7d32",
-                          "& .MuiAlert-icon": { color: "#2ecc71" },
-                        }),
+                    width: { xs: 60, sm: 80 },
+                    height: { xs: 60, sm: 80 },
+                    margin: "0 auto 16px",
+                    background: "white", // match background
+                    boxShadow: "white",
                   }}
                 >
-                  {message}
-                </Alert>
-              </Box>
-            )}
-          </CardContent>
-        </Card>
+                  <AccountBalanceWallet sx={{ fontSize: { xs: 30, sm: 40 }, color: "#2ecc71" }} />
+                </Avatar>
+              </motion.div>
+              <Typography
+                variant={isMobile ? "h5" : "h4"}
+                sx={{
+                  fontWeight: "bold",
+                  color: "white",
+                  mb: 1,
+                  textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+                }}
+              >
+                Money Transfer
+              </Typography>
+              <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.9)" }}>
+                Send money with transparent fee structure
+              </Typography>
+            </Box>
+          </motion.div>
 
-        {/* Footer */}
-        <Box sx={{ textAlign: "center", mt: 4 }}>
-          <Typography variant="body2" color="text.secondary">
-            Secure transactions powered by{" "}
-            <Typography
-              component="span"
+          {/* Main Form Card */}
+          <motion.div variants={itemVariants}>
+            <Card
+              elevation={20}
               sx={{
-                fontWeight: "bold",
-                color: "#2ecc71",
+                borderRadius: 4,
+                overflow: "visible",
+                background: "rgba(255, 255, 255, 0.95)",
+                backdropFilter: "blur(20px)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
               }}
             >
-              MyNkwa
-            </Typography>
-          </Typography>
-        </Box>
-      </Box>
+              <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+                <Grid container spacing={3}>
+
+                  {/* Payment Type Info */}
+                  <Grid item xs={12}>
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <Chip
+                        icon={<Send sx={{ color: "#2ecc71" }} />}
+                        label="Money Transfer Service (10% fee applies)"
+                        sx={{
+                          backgroundColor: "#e8f4fd",
+                          color: "#667eea",
+                          fontWeight: "medium",
+                          py: 1,
+                          width: "100%",
+                          "& .MuiChip-icon": { color: "#667eea" }
+                        }}
+                      />
+                    </motion.div>
+                  </Grid>
+
+                  {/* Amount Field */}
+                  <Grid item xs={12}>
+                    <motion.div variants={itemVariants}>
+                      <TextField
+                        fullWidth
+                        label="Amount to Send (FCFA)"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        type="number"
+                        required
+                        sx={{
+                          "& .MuiInputLabel-root": {
+                            color: "#667eea",
+                            "&.Mui-focused": { color: "#667eea" }
+                          },
+                          "& .MuiOutlinedInput-root": {
+                            backgroundColor: "#f8f9ff",
+                            "&.Mui-focused fieldset": {
+                              borderColor: "#667eea",
+                              borderWidth: 2,
+                            },
+                          },
+                        }}
+                        InputProps={{
+                          startAdornment: (
+                            <AccountBalanceWallet sx={{ color: "#2ecc71", mr: 1 }} />
+                          ),
+                        }}
+                      />
+                    </motion.div>
+                  </Grid>
+
+                  {/* Fee Breakdown */}
+                  <AnimatePresence>
+                    {amount && total > 0 && (
+                      <Grid item xs={12}>
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <Paper
+                            elevation={2}
+                            sx={{
+                              p: { xs: 2, sm: 3 },
+                              backgroundColor: "#f8f9ff",
+                              border: "1px solid #e3f2fd",
+                              borderRadius: 2,
+                            }}
+                          >
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                color: "#2ecc71",
+                                mb: 2,
+                                fontWeight: "bold",
+                                display: "flex",
+                                alignItems: "center",
+                                fontSize: { xs: "1rem", sm: "1.25rem" }
+                              }}
+                            >
+                              <TrendingUp sx={{ mr: 1, color: "#2ecc71" }} />
+                              Transaction Breakdown
+                            </Typography>
+
+                            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                              <Typography variant="body2" color="text.secondary">
+                                Total Amount:
+                              </Typography>
+                              <Typography variant="body2" fontWeight="bold">
+                                {total.toLocaleString()} FCFA
+                              </Typography>
+                            </Box>
+
+                            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                              <Typography variant="body2" color="text.secondary">
+                                Service Fee (10%):
+                              </Typography>
+                              <Typography variant="body2" color="#f44336" fontWeight="bold">
+                                -{fee.toLocaleString()} FCFA
+                              </Typography>
+                            </Box>
+
+                            <Divider sx={{ my: 1 }} />
+
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                              <Typography variant="body1" fontWeight="bold" sx={{ display: "flex", alignItems: "center" }}>
+                                <Person sx={{ mr: 1, fontSize: 18, color: "#2ecc71" }} />
+                                Recipient Receives:
+                              </Typography>
+                              <Typography variant="h6" color="#4caf50" fontWeight="bold">
+                                {receiverAmount.toLocaleString()} FCFA
+                              </Typography>
+                            </Box>
+
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <Typography variant="body2" sx={{ display: "flex", alignItems: "center", color: "#667eea" }}>
+                                <AccountBalance sx={{ mr: 1, fontSize: 16, color: "#2ecc71" }} />
+                                Your Commission:
+                              </Typography>
+                              <Typography variant="body1" color="#667eea" fontWeight="bold">
+                                +{fee.toLocaleString()} FCFA
+                              </Typography>
+                            </Box>
+                          </Paper>
+                        </motion.div>
+                      </Grid>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Sender Phone Number Field */}
+                  <Grid item xs={12}>
+                    <motion.div variants={itemVariants}>
+                      <TextField
+                        fullWidth
+                        label="Sender Phone Number"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        placeholder="e.g. 237650000000"
+                        required
+                        sx={{
+                          "& .MuiInputLabel-root": {
+                            color: "#2ecc71",
+                            "&.Mui-focused": { color: "#2ecc71" }
+                          },
+                          "& .MuiOutlinedInput-root": {
+                            backgroundColor: "#f8f9ff",
+                            "&.Mui-focused fieldset": {
+                              borderColor: "#2ecc71",
+                              borderWidth: 2,
+                            },
+                          },
+                        }}
+                        InputProps={{
+                          startAdornment: (
+                            <Phone sx={{ color: "#2ecc71", mr: 1 }} />
+                          ),
+                        }}
+                      />
+                    </motion.div>
+                  </Grid>
+
+                  {/* Recipient Phone Number Field */}
+                  <Grid item xs={12}>
+                    <motion.div variants={itemVariants}>
+                      <TextField
+                        fullWidth
+                        label="Recipient Phone Number"
+                        value={recipientNumber}
+                        onChange={(e) => setRecipientNumber(e.target.value)}
+                        placeholder="e.g. 237650000000"
+                        required
+                        sx={{
+                          "& .MuiInputLabel-root": {
+                            color: "#2ecc71",
+                            "&.Mui-focused": { color: "#2ecc71" }
+                          },
+                          "& .MuiOutlinedInput-root": {
+                            backgroundColor: "#f8f9ff",
+                            "&.Mui-focused fieldset": {
+                              borderColor: "#2ecc71",
+                              borderWidth: 2,
+                            },
+                          },
+                        }}
+                        InputProps={{
+                          startAdornment: (
+                            <Phone sx={{ color: "#2ecc71", mr: 1 }} />
+                          ),
+                        }}
+                      />
+                    </motion.div>
+                  </Grid>
+
+                  {/* Operator Selection */}
+                  <Grid item xs={12}>
+                    <motion.div variants={itemVariants}>
+                      <FormControl fullWidth>
+                        <InputLabel
+                          id="operator-label"
+                          sx={{
+                            color: "#667eea",
+                            "&.Mui-focused": { color: "#667eea" }
+                          }}
+                        >
+                          Telecom Operator
+                        </InputLabel>
+                        <Select
+                          labelId="operator-label"
+                          value={operator}
+                          label="Telecom Operator"
+                          onChange={(e) => setOperator(e.target.value)}
+                          required
+                          sx={{
+                            backgroundColor: "#f8f9ff",
+                            "& .MuiOutlinedInput-root": {
+                              "&.Mui-focused fieldset": {
+                                borderColor: "#667eea",
+                                borderWidth: 2,
+                              },
+                            },
+                          }}
+                        >
+                          <MenuItem value="mtn">
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <Box
+                                sx={{
+                                  width: 20,
+                                  height: 20,
+                                  borderRadius: "50%",
+                                  backgroundColor: "#ffcc00",
+                                  mr: 2,
+                                }}
+                              />
+                              MTN
+                            </Box>
+                          </MenuItem>
+                          <MenuItem value="orange">
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <Box
+                                sx={{
+                                  width: 20,
+                                  height: 20,
+                                  borderRadius: "50%",
+                                  backgroundColor: "#ff6600",
+                                  mr: 2,
+                                }}
+                              />
+                              Orange
+                            </Box>
+                          </MenuItem>
+                        </Select>
+                      </FormControl>
+                    </motion.div>
+                  </Grid>
+
+                  {/* Submit Button */}
+                  <Grid item xs={12}>
+                    <motion.div
+                      variants={buttonVariants}
+                      whileHover="hover"
+                      whileTap="tap"
+                    >
+                      <Button
+                        onClick={handleSubmit}
+                        disabled={loading || !amount || total <= 0}
+                        fullWidth
+                        variant="contained"
+                        size="large"
+                        sx={{
+                          py: 2,
+                          fontSize: { xs: "1rem", sm: "1.1rem" },
+                          fontWeight: "bold",
+                          borderRadius: 3,
+                          background: "#2ecc71",
+                          color: "#fff",
+                          textTransform: "none",
+                          boxShadow: "0 8px 32px rgba(46, 204, 113, 0.3)",
+                          "&:hover": {
+                            background: "#27ae60",
+                          },
+                          "&.Mui-disabled": {
+                            background: "#bdc3c7",
+                            color: "white",
+                          },
+                        }}
+                        startIcon={
+                          loading ? (
+                            <CircularProgress size={20} color="inherit" />
+                          ) : (
+                            <Send sx={{ color: "#2ecc71" }} />
+                          )
+                        }
+                      >
+                        {loading
+                          ? "Processing Payment..."
+                          : total > 0
+                            ? `Send ${receiverAmount.toLocaleString()} FCFA (Fee: ${fee.toLocaleString()})`
+                            : "Send Money"}
+                      </Button>
+                    </motion.div>
+                  </Grid>
+
+                  {/* Message Display */}
+                  <AnimatePresence>
+                    {message && (
+                      <Grid item xs={12}>
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <Alert
+                            severity={error ? "error" : "success"}
+                            icon={error ? <ErrorIcon sx={{ color: "#2ecc71" }} /> : <CheckCircle sx={{ color: "#2ecc71" }} />}
+                            sx={{
+                              borderRadius: 2,
+                              "& .MuiAlert-message": {
+                                whiteSpace: "pre-line",
+                                fontWeight: "medium",
+                                fontSize: { xs: "0.875rem", sm: "1rem" }
+                              },
+                              ...(error
+                                ? {
+                                  backgroundColor: "#ffebee",
+                                  color: "#c62828",
+                                  "& .MuiAlert-icon": { color: "#c62828" },
+                                }
+                                : {
+                                  backgroundColor: "#e8f5e8",
+                                  color: "#2e7d32",
+                                  "& .MuiAlert-icon": { color: "#4caf50" },
+                                }),
+                            }}
+                          >
+                            {message}
+                          </Alert>
+                        </motion.div>
+                      </Grid>
+                    )}
+                  </AnimatePresence>
+                </Grid>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Footer */}
+          <motion.div variants={itemVariants}>
+            <Box sx={{ textAlign: "center", mt: { xs: 3, sm: 4 } }}>
+              <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.8)" }}>
+                Secure transfers with transparent fees • Powered by{" "}
+                <Typography
+                  component="span"
+                  sx={{
+                    fontWeight: "bold",
+                    color: "white",
+                  }}
+                >
+                  MyNkwa
+                </Typography>
+              </Typography>
+            </Box>
+          </motion.div>
+        </motion.div>
+      </Container>
     </Box>
   );
 };

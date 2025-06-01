@@ -608,6 +608,7 @@ function LearningDashboard() {
         </Toolbar>
       </AppBar>
 
+
       {/* Sidebar */}
       <Box
         component="nav"
@@ -635,6 +636,7 @@ function LearningDashboard() {
             "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth }
           }}
           open
+
         >
           {drawer}
         </Drawer>
