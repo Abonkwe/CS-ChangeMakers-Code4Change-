@@ -43,8 +43,8 @@ const Mentor = () => {
     <>
       <Navbar />
 
-      <Box sx={{ position: 'relative', overflow: 'hidden', py: { xs: 6, md: 10 } }}>
-        {/* Background image with opacity */}
+      <Box sx={{ position: 'relative', py: { xs: 6, md: 10 }, backgroundColor: '#f9f9f9' }}>
+        {/* Subtle Background Image */}
         <Box
           sx={{
             position: 'absolute',
@@ -52,7 +52,7 @@ const Mentor = () => {
             backgroundImage: `url('/images/bg1.jpg')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            opacity: 0.1,
+            opacity: 0.08,
             pointerEvents: 'none',
             zIndex: 0,
           }}
@@ -61,7 +61,6 @@ const Mentor = () => {
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Typography
             variant="h3"
-            component="h1"
             align="center"
             gutterBottom
             sx={{ fontWeight: 'bold', color: '#2ecc71' }}
@@ -72,7 +71,7 @@ const Mentor = () => {
             variant="h6"
             align="center"
             paragraph
-            sx={{ mb: 6, color: '#555' }}
+            sx={{ mb: 6, color: '#444' }}
           >
             Connect with industry experts to accelerate your learning journey.
           </Typography>
@@ -82,15 +81,18 @@ const Mentor = () => {
               <Grid key={name} item xs={12} sm={6} md={4} display="flex" justifyContent="center">
                 <Card
                   sx={{
-                    minWidth: 275,
+                    width: '100%',
+                    maxWidth: 360,
+                    borderRadius: 4,
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    boxShadow: '0 3px 8px rgba(0,0,0,0.1)',
-                    transition: 'transform 0.3s ease',
+                    backgroundColor: '#ffffff',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                     '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: '0 10px 20px rgba(46, 204, 113, 0.3)',
+                      transform: 'translateY(-6px)',
+                      boxShadow: '0 12px 24px rgba(46, 204, 113, 0.25)',
                     },
                     p: 2,
                   }}
@@ -101,11 +103,11 @@ const Mentor = () => {
                         <Avatar src={avatarUrl} sx={{ width: 56, height: 56 }} />
                       ) : (
                         <Avatar sx={{ bgcolor: '#2ecc71', width: 56, height: 56 }}>
-                          <AccountCircleIcon sx={{ fontSize: 40 }} />
+                          <AccountCircleIcon sx={{ fontSize: 40, color: '#fff' }} />
                         </Avatar>
                       )}
                       <Box>
-                        <Typography variant="h6" component="h2" sx={{ fontWeight: '600' }}>
+                        <Typography variant="h6" sx={{ fontWeight: '600' }}>
                           {name}
                         </Typography>
                         <Typography variant="subtitle2" color="text.secondary">
@@ -117,13 +119,23 @@ const Mentor = () => {
                       {bio}
                     </Typography>
                   </CardContent>
-                  <CardActions sx={{ justifyContent: 'flex-end', p: 1 }}>
+
+                  <CardActions sx={{ justifyContent: 'flex-end', px: 2, pb: 2 }}>
                     <Button
                       size="small"
                       variant="contained"
-                      color="success"
+                      sx={{
+                        bgcolor: '#2ecc71',
+                        color: '#fff',
+                        textTransform: 'none',
+                        fontWeight: '600',
+                        '&:hover': {
+                          bgcolor: '#27ae60',
+                        },
+                        borderRadius: '25px',
+                        px: 3,
+                      }}
                       href={contactLink}
-                      sx={{ fontWeight: '600' }}
                     >
                       Contact
                     </Button>

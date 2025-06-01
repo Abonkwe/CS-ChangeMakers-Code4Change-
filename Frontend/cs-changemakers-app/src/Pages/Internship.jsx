@@ -53,8 +53,8 @@ const Internship = () => {
     <>
       <Navbar />
 
-      <Box sx={{ position: 'relative', py: { xs: 6, md: 10 }, overflow: 'hidden' }}>
-        {/* Background image with opacity */}
+      <Box sx={{ position: 'relative', py: { xs: 6, md: 10 }, backgroundColor: '#f9f9f9' }}>
+        {/* Background overlay */}
         <Box
           sx={{
             position: 'absolute',
@@ -62,7 +62,7 @@ const Internship = () => {
             backgroundImage: `url('/images/bg1.jpg')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            opacity: 0.1,
+            opacity: 0.08,
             pointerEvents: 'none',
             zIndex: 0,
           }}
@@ -71,7 +71,6 @@ const Internship = () => {
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Typography
             variant="h3"
-            component="h1"
             align="center"
             gutterBottom
             sx={{ fontWeight: 'bold', color: '#2ecc71' }}
@@ -83,7 +82,7 @@ const Internship = () => {
             variant="h6"
             align="center"
             paragraph
-            sx={{ mb: 6, color: '#555' }}
+            sx={{ mb: 6, color: '#444' }}
           >
             Explore curated internships to kickstart your career in tech.
           </Typography>
@@ -93,47 +92,68 @@ const Internship = () => {
               <Grid key={role + company} item xs={12} sm={6} md={4} display="flex" justifyContent="center">
                 <Card
                   sx={{
-                    minWidth: 275,
+                    width: '100%',
+                    maxWidth: 360,
+                    borderRadius: 4,
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    boxShadow: '0 3px 8px rgba(0,0,0,0.1)',
-                    transition: 'transform 0.3s ease',
+                    backgroundColor: '#ffffff',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                     '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: '0 10px 20px rgba(46, 204, 113, 0.3)',
+                      transform: 'translateY(-6px)',
+                      boxShadow: '0 12px 24px rgba(46, 204, 113, 0.25)',
                     },
                     p: 2,
                   }}
                 >
                   <CardContent>
                     <Typography
-                      gutterBottom
-                      sx={{ color: 'text.secondary', fontSize: 14, display: 'flex', alignItems: 'center', gap: 1 }}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        fontSize: 14,
+                        color: '#2ecc71',
+                        mb: 0.5,
+                      }}
                     >
-                      <WorkOutlineIcon sx={{ fontSize: 18, color: '#2ecc71' }} />
+                      <WorkOutlineIcon sx={{ fontSize: 18 }} />
                       {company}
                     </Typography>
-                    <Typography variant="h5" component="div" sx={{ fontWeight: '600', mb: 0.5 }}>
+
+                    <Typography variant="h6" sx={{ fontWeight: '600', mb: 1 }}>
                       {role}
                     </Typography>
-                    <Typography sx={{ color: 'text.secondary', mb: 1 }}>
+
+                    <Typography sx={{ fontSize: 14, color: 'text.secondary', mb: 1 }}>
                       <strong>Duration:</strong> {duration}
                     </Typography>
-                    <Typography variant="body2" sx={{ mb: 2 }}>
+
+                    <Typography variant="body2" color="text.secondary">
                       {description}
                     </Typography>
                   </CardContent>
 
-                  <CardActions sx={{ justifyContent: 'flex-end', p: 1 }}>
+                  <CardActions sx={{ justifyContent: 'flex-end', px: 2, pb: 2 }}>
                     <Button
                       size="small"
                       variant="contained"
-                      color="success"
+                      sx={{
+                        bgcolor: '#2ecc71',
+                        color: '#fff',
+                        fontWeight: '600',
+                        textTransform: 'none',
+                        px: 3,
+                        borderRadius: '25px',
+                        '&:hover': {
+                          bgcolor: '#27ae60',
+                        },
+                      }}
                       href={applyLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      sx={{ fontWeight: '600' }}
                     >
                       Apply Now
                     </Button>

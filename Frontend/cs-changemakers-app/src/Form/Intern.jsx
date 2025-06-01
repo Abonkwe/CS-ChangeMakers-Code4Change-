@@ -6,10 +6,11 @@ import {
   Grid,
   Box,
   createTheme,
-  ThemeProvider
+  ThemeProvider,
+  InputLabel,
+  Input,
 } from '@mui/material';
 
-// Custom theme to match the green color
 const theme = createTheme({
   palette: {
     primary: {
@@ -29,7 +30,7 @@ const theme = createTheme({
   },
 });
 
-export const MentorshipApplication = () => {
+const Intern = () => {
   return (
     <ThemeProvider theme={theme}>
       <Box
@@ -38,7 +39,7 @@ export const MentorshipApplication = () => {
         alignItems="center"
         height="100vh"
         width="100vw"
-        bgcolor="#ffffff" // Full white background
+        bgcolor="#ffffff"
         padding={2}
       >
         <Box
@@ -50,7 +51,7 @@ export const MentorshipApplication = () => {
           boxShadow={3}
         >
           <Typography variant="h5" align="center" color="primary" gutterBottom>
-            Mentorship Application
+            Internship Application
           </Typography>
           <form noValidate>
             <Grid container spacing={2}>
@@ -75,13 +76,15 @@ export const MentorshipApplication = () => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  variant="outlined"
-                  required
+                <InputLabel shrink htmlFor="resume-upload" sx={{ mb: 1 }}>
+                  Upload Resume
+                </InputLabel>
+                <Input
+                  id="resume-upload"
+                  type="file"
                   fullWidth
-                  label="Phone Number"
-                  type="tel"
-                  color="primary"
+                  required
+                  inputProps={{ accept: '.pdf,.doc,.docx' }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -89,16 +92,7 @@ export const MentorshipApplication = () => {
                   variant="outlined"
                   required
                   fullWidth
-                  label="Area of Expertise"
-                  color="primary"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  variant="outlined"
-                  required
-                  fullWidth
-                  label="Why do you want a mentor?"
+                  label="Cover Letter"
                   multiline
                   rows={4}
                   color="primary"
@@ -111,7 +105,7 @@ export const MentorshipApplication = () => {
               variant="contained"
               sx={{ mt: 3, backgroundColor: '#4CAF50', color: 'white' }}
             >
-              Submit Application
+              Submit
             </Button>
           </form>
         </Box>
@@ -120,4 +114,4 @@ export const MentorshipApplication = () => {
   );
 };
 
-export default MentorshipApplication;
+export default Intern;
