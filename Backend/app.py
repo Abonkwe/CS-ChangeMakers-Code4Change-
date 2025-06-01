@@ -92,7 +92,9 @@ def login():
                 identity=name,
                 additional_claims={"role":"mentor", "id":check_name.id}
                 )
-            return jsonify(access_token=access_token), 200
+            return jsonify(
+                {"access_token": access_token, "id": check_name.id, "name": check_name.name, "tel": check_name.tel, "role": "learner"}
+                ), 200
     else:
         check_name = db.session.execute(db.select(Mentor)).where(Mentor.name==name).scalar()
 
@@ -107,7 +109,9 @@ def login():
                 identity=name,
                 additional_claims={"role":"mentor", "id":check_name.id}
                 )
-            return jsonify(access_token=access_token), 200
+            return jsonify(
+                {"access_token": access_token, "id": check_name.id, "name": check_name.name, "tel": check_name.tel, "email": check_name.email, "role": "mentor", "link": check_name.link}
+                ), 200
 
 @app.route('/get-profile/<int:id>', methods=["GET"])
 @jwt_required()

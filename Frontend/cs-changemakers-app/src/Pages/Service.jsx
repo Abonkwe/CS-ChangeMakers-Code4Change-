@@ -38,8 +38,23 @@ const Service = () => {
   return (
     <>
       <Navbar />
-      <Box sx={{ backgroundColor: '#f5f7fa', py: { xs: 6, md: 10 } }}>
-        <Container maxWidth="lg">
+
+      <Box sx={{ position: 'relative', py: { xs: 6, md: 10 }, backgroundColor: '#f5f7fa' }}>
+        {/* Optional background pattern */}
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url('/images/bg1.jpg')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: 0.07,
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        />
+
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Typography
             variant="h3"
             component="h1"
@@ -53,12 +68,12 @@ const Service = () => {
             variant="h6"
             align="center"
             paragraph
-            sx={{ mb: 6, color: '#555' }}
+            sx={{ mb: 6, color: '#444' }}
           >
             Empowering your tech journey with expert training, mentorship, internships, and project opportunities.
           </Typography>
 
-          <Grid container spacing={4}>
+          <Grid container spacing={4} justifyContent="center">
             {services.map(({ title, description, icon }) => (
               <Grid key={title} item xs={12} sm={6} md={3} display="flex" justifyContent="center">
                 <Paper
@@ -66,25 +81,27 @@ const Service = () => {
                   sx={{
                     p: 4,
                     textAlign: 'center',
+                    width: '100%',
+                    maxWidth: 320,
                     height: '100%',
-                    maxWidth: 300,
+                    borderRadius: 4,
+                    backgroundColor: '#fff',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    backgroundColor: 'white',
-                    borderRadius: 3,
-                    transition: 'transform 0.3s ease',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                     '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: '0 8px 20px rgba(46, 204, 113, 0.3)',
+                      transform: 'translateY(-6px)',
+                      boxShadow: '0 12px 24px rgba(46, 204, 113, 0.25)',
                     },
                   }}
                 >
                   {icon}
                   <Typography
                     variant="h6"
-                    component="h2"
-                    sx={{ mt: 2, mb: 1, fontWeight: '600' }}
+                    sx={{ mt: 2, mb: 1, fontWeight: '600', color: '#333' }}
                   >
                     {title}
                   </Typography>
@@ -97,6 +114,7 @@ const Service = () => {
           </Grid>
         </Container>
       </Box>
+
       <Footer />
     </>
   );

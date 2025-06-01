@@ -29,7 +29,7 @@ const menuItems = [
   { text: 'Mentors', path: '/mentors', icon: <AccountCircleIcon /> },
   { text: 'Opportunities', isDropdown: true, icon: <WorkIcon /> },
   { text: 'Services', path: '/services', icon: <CodeIcon /> },
-  { text: 'Login', path: '/login', icon: <AccountCircleIcon /> },
+  { text: 'Sign Up', path: '/signup', icon: <AccountCircleIcon /> }, // Changed from Login to Sign Up
 ];
 
 export default function TechBridgeNavbar() {
