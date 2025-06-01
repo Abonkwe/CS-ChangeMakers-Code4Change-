@@ -17,6 +17,7 @@
     "@nkwa-pay/sdk": "^0.1.4",
     "@toolpad/core": "^0.15.0",
     "axios": "^1.9.0",
+    "esbuild": "^0.25.5",
     "formik": "^2.4.6",
     "framer-motion": "^12.15.0",
     "lucide-react": "^0.511.0",

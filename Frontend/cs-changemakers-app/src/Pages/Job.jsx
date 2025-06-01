@@ -1,7 +1,7 @@
 import React from 'react';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
-import Job from '../Form/job';
+import JobForm from '../Form/job';
 import {
   Box,
   Container,
@@ -145,8 +145,8 @@ const JobPage = () => {
                           bgcolor: '#27ae60',
                         },
                       }}
-                      href={<Job />}
-                      target="_blank"
+                      href={"/jobform"}
+                      target="_new"
                       rel="noopener noreferrer"
                     >
                       Apply Now

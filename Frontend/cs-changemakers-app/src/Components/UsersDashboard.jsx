@@ -20,7 +20,12 @@ import {
   Paper,
   Button,
   Badge,
+  Modal,
+  Backdrop,
+  Fade,
+  TextField,
 } from '@mui/material';
+import {API_BASE} from '../api'; // Adjust the import path as necessary
 import { createTheme, ThemeProvider, styled } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -42,7 +47,7 @@ const drawerWidth = 280;
 const theme = createTheme({
   palette: {
     mode: 'light',
-    primary: { 
+    primary: {
       main: '#2ecc71',
       light: '#58d68d',
       dark: '#27ae60',
@@ -144,12 +149,48 @@ const MotionBox = motion.create(Box);
 export default function MentorDashboard() {
   const [activePath, setActivePath] = useState('/dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [projectTitle, setProjectTitle] = useState('');
+  const [projectDescription, setProjectDescription] = useState('');
+  const [projectLoading, setProjectLoading] = useState(false);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
   const activeItem = navigation.find(item => item.path === activePath);
+
+  const handleProjectSubmit = async (e) => {
+    e.preventDefault();
+    setProjectLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${API_BASE}/create-project`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: projectTitle,
+          description: projectDescription,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        console.log("Project created:", data);
+        setShowProjectModal(false);
+        setProjectTitle('');
+        setProjectDescription('');
+      } else {
+        console.error("Failed to create project:", data);
+      }
+    } catch (err) {
+      console.error("Error:", err);
+    } finally {
+      setProjectLoading(false);
+    }
+  };
 
   const drawerContent = (
     <Box>
@@ -196,7 +237,7 @@ export default function MentorDashboard() {
         {navigation.map((item, index) => {
           const Icon = item.icon;
           const isActive = activePath === item.path;
-          
+
           return (
             <MotionListItem
               key={item.text}
@@ -232,8 +273,8 @@ export default function MentorDashboard() {
                   <Icon sx={{ color: isActive ? 'white' : '#2ecc71', fontSize: 20 }} />
                 </Box>
               </ListItemIcon>
-              <ListItemText 
-                primary={item.text} 
+              <ListItemText
+                primary={item.text}
                 primaryTypographyProps={{ fontWeight: 600 }}
               />
               {isActive && (
@@ -307,33 +348,33 @@ export default function MentorDashboard() {
       {/* Quick Stats */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {[
-          { 
-            label: 'Total Earnings', 
-            value: '$2,845', 
-            change: '+18%', 
-            icon: AttachMoneyIcon, 
-            color: '#2ecc71' 
+          {
+            label: 'Total Earnings',
+            value: '$2,845',
+            change: '+18%',
+            icon: AttachMoneyIcon,
+            color: '#2ecc71'
           },
-          { 
-            label: 'Active Students', 
-            value: '12', 
-            change: '+3', 
-            icon: GroupIcon, 
-            color: '#3498db' 
+          {
+            label: 'Active Students',
+            value: '12',
+            change: '+3',
+            icon: GroupIcon,
+            color: '#3498db'
           },
-          { 
-            label: 'Projects Posted', 
-            value: '8', 
-            change: '+2', 
-            icon: AssignmentIcon, 
-            color: '#e74c3c' 
+          {
+            label: 'Projects Posted',
+            value: '8',
+            change: '+2',
+            icon: AssignmentIcon,
+            color: '#e74c3c'
           },
-          { 
-            label: 'Job Applications', 
-            value: '5', 
-            change: '+1', 
-            icon: BusinessCenterIcon, 
-            color: '#f39c12' 
+          {
+            label: 'Job Applications',
+            value: '5',
+            change: '+1',
+            icon: BusinessCenterIcon,
+            color: '#f39c12'
           },
         ].map((stat, index) => (
           <Grid item xs={12} sm={6} lg={3} key={index}>
@@ -396,6 +437,7 @@ export default function MentorDashboard() {
                 startIcon={<AssignmentIcon />}
                 fullWidth
                 sx={{ justifyContent: 'flex-start', p: 2 }}
+                onClick={() => setShowProjectModal(true)}
               >
                 Post New Project
               </Button>
@@ -403,8 +445,8 @@ export default function MentorDashboard() {
                 variant="outlined"
                 startIcon={<SchoolIcon />}
                 fullWidth
-                sx={{ 
-                  justifyContent: 'flex-start', 
+                sx={{
+                  justifyContent: 'flex-start',
                   p: 2,
                   borderColor: '#2ecc71',
                   color: '#2ecc71',
@@ -420,8 +462,8 @@ export default function MentorDashboard() {
                 variant="outlined"
                 startIcon={<WorkIcon />}
                 fullWidth
-                sx={{ 
-                  justifyContent: 'flex-start', 
+                sx={{
+                  justifyContent: 'flex-start',
                   p: 2,
                   borderColor: '#2ecc71',
                   color: '#2ecc71',
@@ -436,7 +478,7 @@ export default function MentorDashboard() {
             </Box>
           </GlassCard>
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <GlassCard sx={{ p: 3, height: '100%' }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, color: '#2c3e50' }}>
@@ -577,7 +619,7 @@ export default function MentorDashboard() {
                 aria-label="open drawer"
                 edge="start"
                 onClick={handleDrawerToggle}
-                sx={{ 
+                sx={{
                   display: { sm: 'none' },
                   color: '#2c3e50',
                   mr: 2,
@@ -585,7 +627,7 @@ export default function MentorDashboard() {
               >
                 <MenuIcon />
               </IconButton>
-              
+
               <Box display="flex" alignItems="center" gap={2} flex={1}>
                 {activeItem && (
                   <motion.div
@@ -616,7 +658,7 @@ export default function MentorDashboard() {
                     </Box>
                   </motion.div>
                 )}
-                
+
                 <Box ml="auto" display="flex" alignItems="center" gap={2}>
                   <IconButton sx={{ color: '#2c3e50' }}>
                     <Badge badgeContent={3} color="primary">
@@ -688,7 +730,7 @@ export default function MentorDashboard() {
             }}
           >
             <Toolbar />
-            
+
             <MotionBox
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -709,7 +751,7 @@ export default function MentorDashboard() {
                       waiting for your response.
                     </Typography>
                   </Box>
-                  
+
                   <motion.div
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -738,6 +780,94 @@ export default function MentorDashboard() {
             </MotionBox>
           </Box>
         </Box>
+
+        {/* Modal Overlay for New Project */}
+        <Modal
+          open={showProjectModal}
+          onClose={() => setShowProjectModal(false)}
+          closeAfterTransition
+          BackdropComponent={Backdrop}
+          BackdropProps={{
+            timeout: 500,
+            sx: { background: 'rgba(44, 62, 80, 0.4)' }
+          }}
+        >
+          <Fade in={showProjectModal}>
+            <motion.div
+              initial={{ opacity: 0, y: -60 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -60 }}
+              transition={{ duration: 0.4 }}
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '90%',
+                maxWidth: 480,
+                background: '#fff',
+                borderRadius: 20,
+                boxShadow: '0 8px 32px rgba(46,204,113,0.15)',
+                padding: 32,
+                outline: 'none',
+              }}
+            >
+              <Typography variant="h5" sx={{ mb: 2, color: '#2ecc71', fontWeight: 700 }}>
+                Post New Project
+              </Typography>
+              <form onSubmit={handleProjectSubmit}>
+                <TextField
+                  label="Project Title"
+                  fullWidth
+                  required
+                  value={projectTitle}
+                  onChange={e => setProjectTitle(e.target.value)}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  label="Project Description"
+                  fullWidth
+                  required
+                  multiline
+                  minRows={3}
+                  value={projectDescription}
+                  onChange={e => setProjectDescription(e.target.value)}
+                  sx={{ mb: 3 }}
+                />
+                <Box display="flex" justifyContent="flex-end" gap={2}>
+                  <Button
+                    onClick={() => setShowProjectModal(false)}
+                    variant="outlined"
+                    sx={{
+                      borderColor: '#2ecc71',
+                      color: '#2ecc71',
+                      '&:hover': {
+                        backgroundColor: 'rgba(46, 204, 113, 0.08)',
+                        borderColor: '#2ecc71',
+                      }
+                    }}
+                    disabled={projectLoading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    sx={{
+                      background: '#2ecc71',
+                      color: '#fff',
+                      fontWeight: 600,
+                      '&:hover': { background: '#27ae60' }
+                    }}
+                    disabled={projectLoading}
+                  >
+                    {projectLoading ? "Posting..." : "Post Project"}
+                  </Button>
+                </Box>
+              </form>
+            </motion.div>
+          </Fade>
+        </Modal>
       </GradientBox>
     </ThemeProvider>
   );

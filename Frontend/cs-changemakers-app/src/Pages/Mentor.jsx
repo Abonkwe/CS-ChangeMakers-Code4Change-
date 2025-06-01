@@ -37,7 +37,8 @@ const MentorListing = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSkill, setSelectedSkill] = useState('All');
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
 
   const mentors = [
@@ -485,7 +486,7 @@ const MentorListing = () => {
           >
             <Box textAlign="center" mb={{ xs: 4, md: 6 }}>
               <Typography
-                variant={isMobile ? "h4" : "h3"}
+                variant={isMobile ? "h4" : isTablet ? "h3" : "h2"}
                 component="h1"
                 fontWeight="bold"
                 color="#2c3e50"
@@ -506,7 +507,7 @@ const MentorListing = () => {
                 display="flex"
                 flexDirection={{ xs: 'column', md: 'row' }}
                 gap={2}
-                maxWidth="600px"
+                maxWidth="700px"
                 mx="auto"
                 mb={4}
               >
@@ -571,29 +572,46 @@ const MentorListing = () => {
                 initial="hidden"
                 animate="visible"
               >
-                <Grid container spacing={{ xs: 2, md: 3 }}>
+                <Grid
+                  container
+                  spacing={{ xs: 2, sm: 3, md: 4, lg: 5 }}
+                  columns={{ xs: 1, sm: 8, md: 12, lg: 16 }}
+                >
                   {filteredMentors.map((mentor) => (
-                    <Grid item xs={12} sm={6} lg={4} key={mentor.id}>
+                    <Grid
+                      item
+                      xs={12}
+                      sm={4}
+                      md={4}
+                      lg={3}
+                      key={mentor.id}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'stretch',
+                      }}
+                    >
                       <motion.div
                         variants={cardVariants}
                         whileHover={{ y: -5, transition: { duration: 0.2 } }}
                         layout
+                        style={{ width: '100%', display: 'flex', height: '100%' }}
                       >
                         <Card
                           elevation={2}
                           sx={{
-                            height: '480px', // Fixed height for uniformity
+                            width: '100%',
+                            height: { xs: 480, sm: 500, md: 520, lg: 540 },
                             display: 'flex',
                             flexDirection: 'column',
                             transition: 'all 0.3s ease',
                             '&:hover': {
-                              elevation: 8,
+                              boxShadow: '0 12px 24px rgba(46, 204, 113, 0.15)',
                               transform: 'translateY(-2px)'
                             }
                           }}
                         >
-                          <CardContent sx={{ 
-                            flexGrow: 1, 
+                          <CardContent sx={{
+                            flexGrow: 1,
                             p: { xs: 2, md: 3 },
                             display: 'flex',
                             flexDirection: 'column',
@@ -628,8 +646,8 @@ const MentorListing = () => {
                                 </Typography>
                                 <Typography
                                   variant="subtitle1"
-                                  sx={{ 
-                                    color: '#2ecc71', 
+                                  sx={{
+                                    color: '#2ecc71',
                                     fontWeight: 600,
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
@@ -655,7 +673,7 @@ const MentorListing = () => {
                             {/* Bio - Fixed height container */}
                             <Box
                               sx={{
-                                height: '60px', // Fixed height for bio
+                                height: { xs: 60, md: 70 },
                                 overflow: 'hidden',
                                 mb: 2
                               }}
@@ -665,7 +683,7 @@ const MentorListing = () => {
                                 color="text.secondary"
                                 sx={{
                                   lineHeight: 1.5,
-                                  fontSize: { xs: '0.875rem', md: '0.875rem' },
+                                  fontSize: { xs: '0.875rem', md: '0.95rem' },
                                   display: '-webkit-box',
                                   WebkitLineClamp: 3,
                                   WebkitBoxOrient: 'vertical',
@@ -677,7 +695,7 @@ const MentorListing = () => {
                             </Box>
 
                             {/* Specialties - Fixed height container */}
-                            <Box sx={{ height: '50px', mb: 2, overflow: 'hidden' }}>
+                            <Box sx={{ height: { xs: 50, md: 60 }, mb: 2, overflow: 'hidden' }}>
                               <Box display="flex" flexWrap="wrap" gap={1}>
                                 {mentor.specialties.slice(0, 4).map((specialty, index) => (
                                   <Chip
@@ -688,7 +706,7 @@ const MentorListing = () => {
                                       bgcolor: '#e8f5e8',
                                       color: '#2ecc71',
                                       fontWeight: 500,
-                                      fontSize: { xs: '0.7rem', md: '0.75rem' }
+                                      fontSize: { xs: '0.7rem', md: '0.8rem' }
                                     }}
                                   />
                                 ))}
@@ -699,7 +717,7 @@ const MentorListing = () => {
                                     sx={{
                                       bgcolor: '#f5f5f5',
                                       color: '#666',
-                                      fontSize: { xs: '0.7rem', md: '0.75rem' }
+                                      fontSize: { xs: '0.7rem', md: '0.8rem' }
                                     }}
                                   />
                                 )}
@@ -738,7 +756,7 @@ const MentorListing = () => {
                                     <Typography
                                       variant="body2"
                                       color="text.secondary"
-                                      fontSize={{ xs: '0.75rem', md: '0.875rem' }}
+                                      fontSize={{ xs: '0.75rem', md: '0.9rem' }}
                                     >
                                       {mentor.duration}
                                     </Typography>
@@ -750,7 +768,7 @@ const MentorListing = () => {
                                     <Typography
                                       variant="body2"
                                       color="text.secondary"
-                                      fontSize={{ xs: '0.75rem', md: '0.875rem' }}
+                                      fontSize={{ xs: '0.75rem', md: '0.9rem' }}
                                     >
                                       {mentor.experience}
                                     </Typography>

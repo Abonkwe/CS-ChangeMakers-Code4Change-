@@ -151,7 +151,7 @@ const Internship = () => {
                           bgcolor: '#27ae60',
                         },
                       }}
-                      href={applyLink}
+                      href={"/internshipform"}
                       target="_blank"
                       rel="noopener noreferrer"
                     >

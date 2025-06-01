@@ -28,6 +28,7 @@ import {
   Phone,
   Lock,
 } from "@mui/icons-material";
+import { API_BASE } from "../api"; // adjust path as needed
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import { motion, AnimatePresence } from "framer-motion";
@@ -175,7 +176,7 @@ const SignupPage = () => {
     setErrorMsg("");
     setSuccessMsg("");
     try {
-      const res = await axios.post("http://localhost:5002/login", {
+      const res = await axios.post(`${API_BASE}/signup`, {
         name: values.name,
         password: values.password,
         role: "learner",
@@ -222,7 +223,7 @@ const SignupPage = () => {
         password: values.password,
         role: "learner", // or "mentor" if you want to support mentor signup
       };
-      const res = await axios.post("http://localhost:5002/signup", payload);
+      const res = await axios.post(`${API_BASE}/signup`, payload);
       console.log("Signup response:", res.data); // <-- Console log backend response
       if (res.data.access_token) {
         localStorage.setItem("access_token", res.data.access_token);
