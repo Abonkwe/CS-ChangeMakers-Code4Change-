@@ -7,6 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 @app.route('/signup', methods=["POST"])
 def signup():
 
+
     if not request.is_json:
         return jsonify(message="Request must be JSON"), 400
     
@@ -42,7 +43,7 @@ def signup():
         )
 
         return jsonify(access_token=access_token), 200
-    else:
+    elif check_registration == "mentor":
         check_name = db.session.execute(db.select(Mentor).where(Mentor.name==name)).scalar()
         if check_name:
             return jsonify(message="name already exists")
