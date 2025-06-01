@@ -91,7 +91,7 @@ def login():
                 additional_claims={"role":"mentor", "id":check_name.id}
                 )
             return jsonify(
-                {"access_token": access_token, "id": check_name.id, "name": check_name.name, "tel": check_name.tel, "role": "learner"}
+                {"access_token": access_token, "id": check_name.id, "name": check_name.name, "tel": check_name.tel, "role": check_role}
                 ), 200
     else:
         check_name = db.session.execute(db.select(Mentor)).where(Mentor.name==name).scalar()
@@ -108,7 +108,7 @@ def login():
                 additional_claims={"role":"mentor", "id":check_name.id}
                 )
             return jsonify(
-                {"access_token": access_token, "id": check_name.id, "name": check_name.name, "tel": check_name.tel, "email": check_name.email, "role": "mentor", "link": check_name.link}
+                {"access_token": access_token, "id": check_name.id, "name": check_name.name, "tel": check_name.tel, "email": check_name.email, "role": check_role, "link": check_name.link}
                 ), 200
 
 @app.route('/get-profile/<int:id>', methods=["GET"])
@@ -211,7 +211,7 @@ def apply_for_mentorship():
         learner = db.session.execute(db.select(Learner).where(Learner.name==current_user)).scalar()
         
         if not learner:
-            return jsonify({"error": "Learner not found"}), 404
+            return jsonify({"error": "Learner not found"}), 404 
         
         # Check if mentor exists
         mentor = db.get_or_404(Mentor, request.json.get("mentor_id"))
