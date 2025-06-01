@@ -151,7 +151,7 @@ def view_profile(id):
     
     return jsonify({"message": "Invalid role"}), 400
 
-@app.route('/projects', methods=['POST'])
+@app.route('/create-project', methods=['POST'])
 @jwt_required()
 def create_project():
 
