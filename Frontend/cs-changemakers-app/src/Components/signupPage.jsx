@@ -18,6 +18,10 @@ import {
   ThemeProvider,
   useMediaQuery,
   Container,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
 } from "@mui/material";
 import {
   Visibility,
@@ -150,6 +154,7 @@ const SignupPage = () => {
     confirmPassword: Yup.string()
       .oneOf([Yup.ref("password")], "Passwords must match")
       .required("Please confirm your password"),
+    //role: Yup.string().oneOf(["learner", "mentor"], "Select a valid role").required("Role is required"),
   });
 
   const handleTabChange = (event, newValue) => {
@@ -176,10 +181,10 @@ const SignupPage = () => {
     setErrorMsg("");
     setSuccessMsg("");
     try {
-      const res = await axios.post(`${API_BASE}/signup`, {
+      const res = await axios.post(`${API_BASE}/login`, {
         name: values.name,
         password: values.password,
-        role: "learner",
+        // role: "mentor", // REMOVE this line
       });
       console.log("Login response:", res.data);
       if (res.data.access_token) {
@@ -221,7 +226,7 @@ const SignupPage = () => {
         email: values.email,
         image: "", // You can handle image upload separately if needed
         password: values.password,
-        role: "learner", // or "mentor" if you want to support mentor signup
+        // role: values.role, // REMOVE this line if not needed
       };
       const res = await axios.post(`${API_BASE}/signup`, payload);
       console.log("Signup response:", res.data); // <-- Console log backend response
@@ -587,6 +592,7 @@ const SignupPage = () => {
                           email: "",
                           password: "",
                           confirmPassword: "",
+                          role: "",
                         }}
                         validationSchema={signupSchema}
                         onSubmit={handleSignup}
@@ -866,6 +872,30 @@ const SignupPage = () => {
                               </motion.div>
 
                               <motion.div variants={fieldVariants}>
+                                <FormControl fullWidth sx={{ mb: 2 }}>
+                                  <InputLabel id="role-label">Role</InputLabel>
+                                  <Select
+                                    labelId="role-label"
+                                    id="role"
+                                    name="role"
+                                    label="Role"
+                                    value={values.role}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    error={touched.role && Boolean(errors.role)}
+                                  >
+                                    <MenuItem value="learner">Learner</MenuItem>
+                                    <MenuItem value="mentor">Mentor</MenuItem>
+                                  </Select>
+                                  {touched.role && errors.role && (
+                                    <Typography variant="caption" color="error">
+                                      {errors.role}
+                                    </Typography>
+                                  )}
+                                </FormControl>
+                              </motion.div>
+
+                              <motion.div variants={fieldVariants}>
                                 <Button
                                   component={motion.button}
                                   whileHover={{ scale: 1.02 }}
@@ -883,7 +913,8 @@ const SignupPage = () => {
                                     fontWeight: 600,
                                     background: "linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)",
                                     boxShadow: "0 4px 15px rgba(46, 204, 113, 0.4)",
-                                    "&:hover": {background: "linear-gradient(135deg, #27ae60 0%, #229954 100%)",
+                                    "&:hover": {
+                                      background: "linear-gradient(135deg, #27ae60 0%, #229954 100%)",
                                       boxShadow: "0 6px 20px rgba(46, 204, 113, 0.6)",
                                     },
                                   }}

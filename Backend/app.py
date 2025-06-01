@@ -94,7 +94,7 @@ def login():
             return jsonify(
                 {"access_token": access_token, "id": check_name.id, "name": check_name.name, "tel": check_name.tel, "role": check_role}
                 ), 200
-    else:
+    elif check_role == "mentor":
         check_name = db.session.execute(db.select(Mentor)).where(Mentor.name==name).scalar()
 
         if not check_name:
