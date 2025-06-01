@@ -13,6 +13,7 @@ import {
   Menu,
   MenuItem,
   Collapse,
+  Avatar,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -29,15 +30,28 @@ const menuItems = [
   { text: 'Mentors', path: '/mentors', icon: <AccountCircleIcon /> },
   { text: 'Opportunities', isDropdown: true, icon: <WorkIcon /> },
   { text: 'Services', path: '/services', icon: <CodeIcon /> },
-  { text: 'Sign Up', path: '/signup', icon: <AccountCircleIcon /> }, // Changed from Login to Sign Up
 ];
 
 export default function TechBridgeNavbar() {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [mobileOpportunitiesOpen, setMobileOpportunitiesOpen] = React.useState(false);
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [userName, setUserName] = React.useState("");
   const location = useLocation();
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    const name = localStorage.getItem("user_name");
+    if (token) {
+      setIsAuthenticated(true);
+      setUserName(name || "");
+    } else {
+      setIsAuthenticated(false);
+      setUserName("");
+    }
+  }, []);
 
   const toggleDrawer = (open) => (event) => {
     if (event?.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) return;
@@ -54,6 +68,14 @@ export default function TechBridgeNavbar() {
 
   const handleMobileOpportunitiesClick = () => {
     setMobileOpportunitiesOpen((prev) => !prev);
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    setIsAuthenticated(false);
+    setUserName("");
+    navigate("/signup");
+    window.location.reload();
   };
 
   const renderMenuItems = (isMobile = false) =>
@@ -217,6 +239,65 @@ export default function TechBridgeNavbar() {
                 </Button>
               );
             })}
+          </Box>
+
+          {/* User Section */}
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {isAuthenticated ? (
+              <>
+                <Avatar
+                  sx={{
+                    bgcolor: "#2ecc71",
+                    color: "#222",
+                    border: "2px solid #fff",
+                    width: 40,
+                    height: 40,
+                    fontWeight: 700,
+                    fontSize: 18,
+                    ml: 2,
+                  }}
+                >
+                  {userName ? userName.slice(0, 2).toUpperCase() : ""}
+                </Avatar>
+                <Button
+                  onClick={handleLogout}
+                  sx={{
+                    fontWeight: '600',
+                    color: 'white',
+                    textTransform: 'none',
+                    borderRadius: '20px',
+                    px: 2,
+                    ml: 2,
+                    backgroundColor: 'transparent',
+                    '&:hover': {
+                      backgroundColor: 'white',
+                      color: '#2ecc71',
+                    },
+                  }}
+                >
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <Button
+                color="inherit"
+                component={Link}
+                to="/signup"
+                sx={{
+                  borderRadius: "25px",
+                  border: "1.5px solid #2ecc71",
+                  color: "#2ecc71",
+                  fontWeight: 600,
+                  px: 3,
+                  textTransform: "none",
+                  "&:hover": {
+                    bgcolor: "#eafaf1",
+                  },
+                }}
+              >
+                Sign Up
+              </Button>
+            )}
           </Box>
 
           {/* Mobile Menu Icon */}
