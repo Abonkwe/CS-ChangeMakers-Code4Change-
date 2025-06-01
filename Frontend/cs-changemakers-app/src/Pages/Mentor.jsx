@@ -443,9 +443,9 @@ const MentorListing = () => {
     return matchesSearch && matchesSkill;
   });
 
-  const handleGetMentor = (mentorName) => {
-    // Optionally, pass mentor info via state or params
-    navigate("/payment", { state: { mentorName } });
+  const handleGetMentor = (mentorName, mentorAmount) => {
+    // Pass mentorName and mentorAmount (in XAF) to the payment page
+    navigate("/payment", { state: { mentorName, amount: mentorAmount } });
   };
 
   const containerVariants = {
@@ -592,8 +592,8 @@ const MentorListing = () => {
                             }
                           }}
                         >
-                          <CardContent sx={{ 
-                            flexGrow: 1, 
+                          <CardContent sx={{
+                            flexGrow: 1,
                             p: { xs: 2, md: 3 },
                             display: 'flex',
                             flexDirection: 'column',
@@ -628,8 +628,8 @@ const MentorListing = () => {
                                 </Typography>
                                 <Typography
                                   variant="subtitle1"
-                                  sx={{ 
-                                    color: '#2ecc71', 
+                                  sx={{
+                                    color: '#2ecc71',
                                     fontWeight: 600,
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
@@ -722,13 +722,14 @@ const MentorListing = () => {
                               <Grid container spacing={2} alignItems="center">
                                 <Grid item xs={4}>
                                   <Box display="flex" alignItems="center" gap={0.5}>
-                                    <AttachMoney sx={{ color: '#2ecc71', fontSize: '1.2rem' }} />
+                                    {/* Remove AttachMoney icon if you don't want the $ symbol */}
                                     <Typography
                                       variant="h6"
                                       fontWeight="bold"
                                       sx={{ color: '#2ecc71', fontSize: { xs: '1rem', md: '1.1rem' } }}
                                     >
-                                      ${mentor.price}
+                                      {/* Convert price from USD to XAF (1 USD ≈ 600 XAF) */}
+                                      {(mentor.price * 600).toLocaleString()} XAF
                                     </Typography>
                                   </Box>
                                 </Grid>
@@ -768,7 +769,7 @@ const MentorListing = () => {
                                 fullWidth
                                 variant="contained"
                                 size="large"
-                                onClick={() => handleGetMentor(mentor.name)}
+                                onClick={() => handleGetMentor(mentor.name, mentor.price * 600)}
                                 sx={{
                                   bgcolor: '#2ecc71',
                                   color: 'white',

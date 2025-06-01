@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom"; // <-- Add this import
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Alert,
@@ -35,6 +36,7 @@ import {
 } from "@mui/icons-material";
 
 const SendMoneyForm = () => {
+  const location = useLocation(); // <-- Add this line
   const [amount, setAmount] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("2376"); // Pre-fill with 2376
   const [recipientNumber, setRecipientNumber] = useState("2376"); // Optional: also pre-fill recipient
@@ -227,6 +229,13 @@ const SendMoneyForm = () => {
     }
   };
 
+  // Prefill amount if passed from Mentor page
+  useEffect(() => {
+    if (location.state && location.state.amount) {
+      setAmount(location.state.amount.toString());
+    }
+  }, [location.state]);
+
   return (
     <Box
       sx={{
@@ -270,7 +279,7 @@ const SendMoneyForm = () => {
                   textShadow: "0 2px 4px rgba(0,0,0,0.3)",
                 }}
               >
-                Money Transfer
+                Make Payment
               </Typography>
               <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.9)" }}>
                 Send money with transparent fee structure
