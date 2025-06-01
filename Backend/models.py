@@ -27,6 +27,9 @@ class Learner(db.Model):
     # relationship to payments
     payments: Mapped[List["Payment"]] = relationship("Payment", back_populates="learner", cascade="all, delete-orphan")
 
+    # relationship to mentorship application
+    mentorship_applications: Mapped[List["MentorshipApplication"]] = relationship("MentorshipApplication", back_populates="learner", cascade="all, delete-orphan")
+
     def to_json(self):
         return {
             "id": self.id,
@@ -38,7 +41,6 @@ class Learner(db.Model):
 
             "mentor": self.mentor.to_json() if self.mentor else None
         }
-
 
 class Mentor(db.Model):
     __tablename__="mentor"
@@ -61,6 +63,9 @@ class Mentor(db.Model):
 
     # relationship to payments
     payments: Mapped[List["Payment"]] = relationship("Payment", back_populates="mentor", cascade="all, delete-orphan")
+
+    # relationship to mentorship applications
+    mentorship_applications: Mapped[List["MentorshipApplication"]] = relationship("MentorshipApplication", back_populates="mentor", cascade="all, delete-orphan")
 
     def to_json(self):
         return {
@@ -105,7 +110,6 @@ class Project(db.Model):
                 "name": self.mentor.name
             } if self.mentor else None
         }
-
 
 class Application(db.Model):
     __tablename__ = "application"
@@ -169,4 +173,38 @@ class Payment(db.Model):
             "learner_id": self.learner_id,
             "mentor_id": self.mentor_id,
             "project_id": self.project_id
+        }
+    
+class MentorshipApplication(db.Model):
+    __tablename__ = "mentorship_application"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mentor_id: Mapped[int] = mapped_column(Integer, ForeignKey("mentor.id"), nullable=False)
+    project_id: Mapped[int] = mapped_column(Integer, ForeignKey("project.id"), nullable=True)
+    application_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending/accepted/rejected
+    message: Mapped[str] = mapped_column(Text, nullable=True)
+    goals: Mapped[str] = mapped_column(Text, nullable=True)  # What the learner hopes to achieve
+    
+    # Relationship to learner
+    learner_id: Mapped[int] = mapped_column(Integer, ForeignKey("learner.id"), nullable=False)
+    learner: Mapped["Learner"] = relationship("Learner", back_populates="mentorship_applications")
+    
+    # Relationship to Mentor
+    mentor: Mapped["Mentor"] = relationship("Mentor", back_populates="mentorship_applications")
+    # project: Mapped["Project"] = relationship("Project")
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "learner_id": self.learner_id,
+            "mentor_id": self.mentor_id,
+            # "project_id": self.project_id,
+            "status": self.status,
+            "application_date": self.application_date.isoformat(),
+            "message": self.message,
+            "goals": self.goals,
+            "learner_name": self.learner.name if self.learner else None,
+            "mentor_name": self.mentor.name if self.mentor else None,
+            # "project_title": self.project.title if self.project else None
         }

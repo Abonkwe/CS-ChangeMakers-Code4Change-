@@ -1,6 +1,6 @@
 from flask import request, jsonify
 from config import app, db
-from models import Learner, Mentor, Project
+from models import Learner, Mentor, Project, MentorshipApplication
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required, create_access_token
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -10,9 +10,7 @@ def signup():
     if not request.is_json:
         return jsonify(message="Request must be JSON"), 400
     
-    check_registration = request.json.get("role")
-
-
+    check_registration = request.json.get("role") 
 
     name = request.json.get('name')
     # email = request.json.get('email')
@@ -202,6 +200,74 @@ def get_projects():
             "message": "Failed to fetch projects",
             "error": str(e)
         }), 500
+
+
+@app.route('/mentorship/apply', methods=['POST'])
+@jwt_required()
+def apply_for_mentorship():
+
+    try:
+        current_user = get_jwt_identity()
+        learner = db.session.execute(db.select(Learner).where(Learner.name==current_user)).scalar()
+        
+        if not learner:
+            return jsonify({"error": "Learner not found"}), 404
+        
+        # Check if mentor exists
+        mentor = db.get_or_404(Mentor, request.json.get("mentor_id"))
+        if not mentor:
+            return jsonify({"error": "Mentor not found"}), 404
+        
+        # Create application
+        application = MentorshipApplication(
+            learner_id=learner.id,
+            mentor_id=mentor.id,
+            project_id=request.json.get('project_id'),
+            message=request.json.get('message'),
+            goals=request.json.get('goals'),
+            status="pending"
+        )
+        
+        db.session.add(application)
+        db.session.commit()
+        
+        return jsonify({
+            "message": "Application submitted successfully",
+            "application": application.to_json()
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/mentorship/appliations', methods=["GET"])
+@jwt_required()
+def get_mentorship_applications():
+    current_user = get_jwt_identity()
+    claims = get_jwt()
+    
+    if claims['role'] == 'learner':
+        learner = Learner.query.filter_by(name=current_user).first()
+        if not learner:
+            return jsonify({"error": "Learner not found"}), 404
+        
+        applications = MentorshipApplication.query.filter_by(
+            learner_id=learner.id
+        ).all()
+        
+    elif claims['role'] == 'mentor':
+        mentor = Mentor.query.filter_by(name=current_user).first()
+        if not mentor:
+            return jsonify({"error": "Mentor not found"}), 404
+        
+        applications = MentorshipApplication.query.filter_by(
+            mentor_id=mentor.id
+        ).all()
+        
+    else:
+        return jsonify({"error": "Unauthorized"}), 403
+    
+    return jsonify([app.to_json() for app in applications]), 200
 
 if __name__ == "__main__":
     with app.app_context():
