@@ -8,6 +8,7 @@ import MentorsPage from './Pages/Mentor';
 import InternshipsPage from './Pages/Internship';
 import ServicesPage from './Pages/Service';
 import Job from './Pages/Job';
+import SignupPage from './Components/signupPage';
 
 
 const App = () => {
@@ -20,6 +21,8 @@ const App = () => {
         <Route path="/internships" element={<InternshipsPage />} />
         <Route path="/services" element={<ServicesPage />} />
         <Route path="/jobs" element={<Job />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="*" element={<SignupPage />} />
       </Routes>
     </Router>
   );
