@@ -8,6 +8,9 @@ import MentorsPage from './Pages/Mentor';
 import InternshipsPage from './Pages/Internship';
 import ServicesPage from './Pages/Service';
 import Job from './Pages/Job';
+import LearnerDashboard from './Components/LearnerDashboard';
+
+
 
 
 const App = () => {
@@ -20,6 +23,7 @@ const App = () => {
         <Route path="/internships" element={<InternshipsPage />} />
         <Route path="/services" element={<ServicesPage />} />
         <Route path="/jobs" element={<Job />} />
+        <Route path="/learner" element={<LearnerDashboard/>}/>
       </Routes>
     </Router>
   );
