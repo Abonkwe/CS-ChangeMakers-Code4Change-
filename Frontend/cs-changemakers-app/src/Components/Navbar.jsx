@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   AppBar,
   Box,
@@ -13,6 +13,7 @@ import {
   Menu,
   MenuItem,
   Collapse,
+  Avatar,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -29,50 +30,65 @@ const menuItems = [
   { text: 'Mentors', path: '/mentors', icon: <AccountCircleIcon /> },
   { text: 'Opportunities', isDropdown: true, icon: <WorkIcon /> },
   { text: 'Services', path: '/services', icon: <CodeIcon /> },
-  { text: 'Sign Up', path: '/signup', icon: <AccountCircleIcon /> }, // Changed from Login to Sign Up
+];
+
+const opportunityItems = [
+  { text: 'Internships', path: '/internships' },
+  { text: 'Jobs', path: '/jobs' },
+  { text: 'Projects', path: '/projects' },
 ];
 
 export default function TechBridgeNavbar() {
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const [mobileOpportunitiesOpen, setMobileOpportunitiesOpen] = React.useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [mobileOpportunitiesOpen, setMobileOpportunitiesOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [userRole, setUserRole] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    const name = localStorage.getItem("user_name");
+    const role = localStorage.getItem("user_role");
+    setUserName(name || "");
+    setUserRole(role || "");
+    setIsAuthenticated(!!token);
+  }, []);
 
   const toggleDrawer = (open) => (event) => {
     if (event?.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) return;
     setDrawerOpen(open);
   };
 
-  const handleDropdownClick = (event) => {
-    setAnchorEl(event.currentTarget);
+  const handleDropdownClick = (event) => setAnchorEl(event.currentTarget);
+  const handleDropdownClose = () => setAnchorEl(null);
+  const handleMobileOpportunitiesClick = () => setMobileOpportunitiesOpen(prev => !prev);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    setIsAuthenticated(false);
+    setUserName("");
+    setUserRole("");
+    navigate("/signup");
+    window.location.reload();
   };
 
-  const handleDropdownClose = () => {
-    setAnchorEl(null);
+  const handleUserAvatarClick = () => {
+    if (userRole === "mentor") navigate("/usersdashboard");
+    else if (userRole === "learner") navigate("/learnerdashboard");
   };
 
-  const handleMobileOpportunitiesClick = () => {
-    setMobileOpportunitiesOpen((prev) => !prev);
-  };
-
-  const renderMenuItems = (isMobile = false) =>
+  const renderMobileMenuItems = () =>
     menuItems.map(({ text, path, icon, isDropdown }) => {
-      const isActive = location.pathname === path;
-
-      if (isDropdown && isMobile) {
-        // Mobile: render a collapsible menu item
+      if (isDropdown) {
         return (
           <React.Fragment key={text}>
             <ListItem
               button
               onClick={handleMobileOpportunitiesClick}
-              sx={{
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
+              sx={{ color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 {icon}
@@ -82,30 +98,18 @@ export default function TechBridgeNavbar() {
             </ListItem>
             <Collapse in={mobileOpportunitiesOpen} timeout="auto" unmountOnExit>
               <List component="div" disablePadding sx={{ pl: 4 }}>
-                <ListItem
-                  button
-                  component={Link}
-                  to="/internships"
-                  sx={{ color: 'white' }}
-                >
-                  <ListItemText primary="Internships" />
-                </ListItem>
-                <ListItem
-                  button
-                  component={Link}
-                  to="/jobs"
-                  sx={{ color: 'white' }}
-                >
-                  <ListItemText primary="Jobs" />
-                </ListItem>
+                {opportunityItems.map(({ text: itemText, path: itemPath }) => (
+                  <ListItem key={itemText} button component={Link} to={itemPath} sx={{ color: 'white' }}>
+                    <ListItemText primary={itemText} />
+                  </ListItem>
+                ))}
               </List>
             </Collapse>
           </React.Fragment>
         );
       }
 
-      if (isDropdown) return null; // desktop dropdown handled separately
-
+      const isActive = location.pathname === path;
       return (
         <ListItem
           button
@@ -117,11 +121,10 @@ export default function TechBridgeNavbar() {
             alignItems: 'center',
             gap: 1,
             color: isActive ? 'white' : '#ffffffb3',
-            backgroundColor: isActive ? '#27ae60' : 'transparent',
+            backgroundColor: isActive ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
             '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' },
             px: 2,
             py: 1,
-            textDecoration: 'none',
           }}
         >
           {icon}
@@ -162,10 +165,9 @@ export default function TechBridgeNavbar() {
                         fontWeight: '600',
                         color: 'white',
                         textTransform: 'none',
-                        '&:hover': {
-                          backgroundColor: 'white',
-                          color: '#2ecc71',
-                        },
+                        borderRadius: '20px',
+                        px: 2,
+                        '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' },
                       }}
                     >
                       {text}
@@ -174,21 +176,17 @@ export default function TechBridgeNavbar() {
                       anchorEl={anchorEl}
                       open={Boolean(anchorEl)}
                       onClose={handleDropdownClose}
-                      anchorOrigin={{
-                        vertical: 'bottom',
-                        horizontal: 'left',
-                      }}
-                      transformOrigin={{
-                        vertical: 'top',
-                        horizontal: 'left',
-                      }}
+                      anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+                      transformOrigin={{ vertical: 'top', horizontal: 'left' }}
                     >
-                      <MenuItem onClick={() => { navigate('/internships'); handleDropdownClose(); }}>
-                        Internships
-                      </MenuItem>
-                      <MenuItem onClick={() => { navigate('/jobs'); handleDropdownClose(); }}>
-                        Jobs
-                      </MenuItem>
+                      {opportunityItems.map(({ text: itemText, path: itemPath }) => (
+                        <MenuItem 
+                          key={itemText}
+                          onClick={() => { navigate(itemPath); handleDropdownClose(); }}
+                        >
+                          {itemText}
+                        </MenuItem>
+                      ))}
                     </Menu>
                   </Box>
                 );
@@ -208,8 +206,8 @@ export default function TechBridgeNavbar() {
                     px: 2,
                     textTransform: 'none',
                     '&:hover': {
-                      backgroundColor: 'white',
-                      color: '#2ecc71',
+                      backgroundColor: isActive ? 'white' : 'rgba(255, 255, 255, 0.1)',
+                      color: isActive ? '#2ecc71' : 'white',
                     },
                   }}
                 >
@@ -219,16 +217,75 @@ export default function TechBridgeNavbar() {
             })}
           </Box>
 
-          {/* Mobile Menu Icon */}
-          <IconButton
-            size="large"
-            edge="end"
-            aria-label="menu"
-            sx={{ color: 'white', display: { xs: 'flex', md: 'none' } }}
-            onClick={toggleDrawer(true)}
-          >
-            <MenuIcon />
-          </IconButton>
+          {/* User Section */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {isAuthenticated ? (
+              <>
+                <Avatar
+                  sx={{
+                    bgcolor: "white",
+                    color: "#2ecc71",
+                    width: 40,
+                    height: 40,
+                    fontWeight: 700,
+                    fontSize: 16,
+                    cursor: userRole ? "pointer" : "default",
+                    '&:hover': userRole ? { bgcolor: '#f0f0f0' } : {},
+                  }}
+                  onClick={handleUserAvatarClick}
+                >
+                  {userName ? userName.slice(0, 2).toUpperCase() : "U"}
+                </Avatar>
+                <Button
+                  onClick={handleLogout}
+                  sx={{
+                    fontWeight: '600',
+                    color: 'white',
+                    textTransform: 'none',
+                    borderRadius: '20px',
+                    px: 2,
+                    border: '1px solid white',
+                    '&:hover': {
+                      backgroundColor: 'white',
+                      color: '#2ecc71',
+                    },
+                  }}
+                >
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <Button
+                component={Link}
+                to="/signup"
+                sx={{
+                  fontWeight: '600',
+                  color: 'white',
+                  textTransform: 'none',
+                  borderRadius: '20px',
+                  px: 3,
+                  border: '1px solid white',
+                  '&:hover': {
+                    backgroundColor: 'white',
+                    color: '#2ecc71',
+                  },
+                }}
+              >
+                Sign Up
+              </Button>
+            )}
+
+            {/* Mobile Menu Icon */}
+            <IconButton
+              size="large"
+              edge="end"
+              aria-label="menu"
+              sx={{ color: 'white', display: { xs: 'flex', md: 'none' }, ml: 1 }}
+              onClick={toggleDrawer(true)}
+            >
+              <MenuIcon />
+            </IconButton>
+          </Box>
         </Toolbar>
       </AppBar>
 
@@ -240,7 +297,27 @@ export default function TechBridgeNavbar() {
           onClick={toggleDrawer(false)}
           onKeyDown={toggleDrawer(false)}
         >
-          <List>{renderMenuItems(true)}</List>
+          <List>{renderMobileMenuItems()}</List>
+          {/* Mobile Auth Section */}
+          <Box sx={{ p: 2, borderTop: '1px solid rgba(255,255,255,0.2)', mt: 'auto' }}>
+            {!isAuthenticated && (
+              <Button
+                component={Link}
+                to="/signup"
+                fullWidth
+                sx={{
+                  color: 'white',
+                  border: '1px solid white',
+                  borderRadius: '20px',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' },
+                }}
+              >
+                Sign Up
+              </Button>
+            )}
+          </Box>
         </Box>
       </Drawer>
     </Box>
