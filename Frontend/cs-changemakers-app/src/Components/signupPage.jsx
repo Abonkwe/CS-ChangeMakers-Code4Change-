@@ -12,10 +12,8 @@ import {
   Avatar,
   IconButton,
   InputAdornment,
-  Alert,
   Tab,
   Tabs,
-  Divider,
   createTheme,
   ThemeProvider,
 } from "@mui/material";
