@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Grid,
@@ -168,10 +168,21 @@ function LearnerDashboard() {
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));
   const isTablet = useMediaQuery(muiTheme.breakpoints.between("md", "lg"));
 
-  // Enhanced Mock data
+  // Get user info from localStorage
+  const [userName, setUserName] = useState("");
+  const [userImage, setUserImage] = useState("");
+
+  useEffect(() => {
+    const name = localStorage.getItem("user_name") || "Learner";
+    const image = localStorage.getItem("user_image") || "";
+    setUserName(name);
+    setUserImage(image);
+  }, []);
+
+  // Enhanced Mock data (use userName and userImage)
   const learnerData = {
-    name: "Tayo Mbah",
-    avatar: "/api/placeholder/64/64",
+    name: userName,
+    avatar: userImage || "", // fallback to blank if not set
     level: "Intermediate",
     points: 2450,
     completedCourses: 8,
@@ -326,10 +337,10 @@ function LearnerDashboard() {
       <Card sx={{ height: "100%", position: "relative", overflow: "visible" }}>
         <CardContent sx={{ p: 3 }}>
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-            <Avatar 
-              sx={{ 
-                bgcolor: `${color}.main`, 
-                width: 56, 
+            <Avatar
+              sx={{
+                bgcolor: `${color}.main`,
+                width: 56,
                 height: 56,
                 boxShadow: 3,
               }}
@@ -337,10 +348,10 @@ function LearnerDashboard() {
               {icon}
             </Avatar>
             {trend && (
-              <Chip 
-                label={trend} 
-                size="small" 
-                color="success" 
+              <Chip
+                label={trend}
+                size="small"
+                color="success"
                 sx={{ fontWeight: 600 }}
               />
             )}
@@ -377,26 +388,40 @@ function LearnerDashboard() {
       <Box sx={{ p: 3 }}>
         {/* User Info in Sidebar */}
         <Box sx={{ mb: 3, textAlign: "center" }}>
-          <Avatar 
-            src={learnerData.avatar} 
-            sx={{ width: 64, height: 64, mx: "auto", mb: 2, border: "3px solid", borderColor: "primary.main" }}
-          />
+          <Avatar
+            src={learnerData.avatar}
+            sx={{
+              width: 64,
+              height: 64,
+              mx: "auto",
+              mb: 2,
+              border: "3px solid",
+              borderColor: "primary.main",
+              bgcolor: "#2ecc71",
+              color: "#222",
+              fontWeight: 700,
+              fontSize: 28,
+              textTransform: "uppercase",
+            }}
+          >
+            {!learnerData.avatar && userName ? userName.slice(0, 2).toUpperCase() : ""}
+          </Avatar>
           <Typography variant="h6" fontWeight={600}>
             {learnerData.name.split(" ")[0]}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {learnerData.level}
           </Typography>
-          <Chip 
-            label={`${learnerData.points} pts`} 
-            color="primary" 
-            size="small" 
+          <Chip
+            label={`${learnerData.points} pts`}
+            color="primary"
+            size="small"
             sx={{ mt: 1 }}
           />
         </Box>
-        
+
         <Divider sx={{ mb: 3 }} />
-        
+
         <List disablePadding>
           {sidebarItems.map((item) => (
             <ListItem
@@ -593,10 +618,10 @@ function LearnerDashboard() {
                                 {skill.name}
                               </Typography>
                               <Box display="flex" alignItems="center" gap={1}>
-                                <Chip 
-                                  label={skill.growth} 
-                                  size="small" 
-                                  color="success" 
+                                <Chip
+                                  label={skill.growth}
+                                  size="small"
+                                  color="success"
                                   variant="outlined"
                                 />
                                 <Typography variant="body2" fontWeight={600}>
@@ -607,8 +632,8 @@ function LearnerDashboard() {
                             <LinearProgress
                               variant="determinate"
                               value={skill.level}
-                              sx={{ 
-                                height: 8, 
+                              sx={{
+                                height: 8,
                                 borderRadius: 4,
                                 bgcolor: "grey.200",
                                 "& .MuiLinearProgress-bar": {
@@ -703,7 +728,7 @@ function LearnerDashboard() {
                   Discover and continue your learning journey
                 </Typography>
               </Box>
-              
+
               <Grid container spacing={3}>
                 {courses.map((course, index) => (
                   <Grid item xs={12} sm={6} lg={4} key={index}>
@@ -712,20 +737,20 @@ function LearnerDashboard() {
                         <CardContent sx={{ p: 3 }}>
                           <Box display="flex" justify="space-between" alignItems="start" mb={2}>
                             <BookmarkIcon color="action" />
-                            <Chip 
-                              label={course.progress === 0 ? "New" : `${course.progress}%`} 
+                            <Chip
+                              label={course.progress === 0 ? "New" : `${course.progress}%`}
                               color={course.progress === 100 ? "success" : "primary"}
                               size="small"
                             />
                           </Box>
-                          
+
                           <Typography variant="h6" fontWeight={600} mb={1}>
                             {course.title}
                           </Typography>
                           <Typography color="text.secondary" mb={2} variant="body2">
                             by {course.instructor}
                           </Typography>
-                          
+
                           {course.progress > 0 && (
                             <Box sx={{ mb: 2 }}>
                               <LinearProgress
@@ -735,7 +760,7 @@ function LearnerDashboard() {
                               />
                             </Box>
                           )}
-                          
+
                           <Box display="flex" justify="space-between" alignItems="center" mb={2}>
                             <Box display="flex" alignItems="center" gap={1}>
                               <StarIcon color="warning" sx={{ fontSize: 16 }} />
@@ -745,11 +770,11 @@ function LearnerDashboard() {
                               {course.duration}
                             </Typography>
                           </Box>
-                          
+
                           <Typography variant="body2" color="text.secondary" mb={2}>
                             {course.students.toLocaleString()} students
                           </Typography>
-                          
+
                           <Box display="flex" justify="space-between" alignItems="center">
                             <Typography variant="h6" color="secondary.main" fontWeight={600}>
                               {course.price.toLocaleString()} XAF
@@ -757,8 +782,8 @@ function LearnerDashboard() {
                           </Box>
                         </CardContent>
                         <CardActions sx={{ p: 3, pt: 0 }}>
-                          <Button 
-                            fullWidth 
+                          <Button
+                            fullWidth
                             variant={course.progress > 0 ? "contained" : "outlined"}
                             startIcon={course.progress > 0 ? <PlayArrowIcon /> : <SchoolIcon />}
                           >
@@ -790,7 +815,7 @@ function LearnerDashboard() {
                   Collaborate on real-world projects and build your portfolio
                 </Typography>
               </Box>
-              
+
               <Grid container spacing={3}>
                 {projects.map((project, index) => (
                   <Grid item xs={12} lg={6} key={index}>
@@ -805,16 +830,16 @@ function LearnerDashboard() {
                               label={project.status}
                               color={
                                 project.status === "Completed" ? "success" :
-                                project.status === "In Progress" ? "primary" : "default"
+                                  project.status === "In Progress" ? "primary" : "default"
                               }
                               size="small"
                             />
                           </Box>
-                          
+
                           <Typography variant="body2" color="text.secondary" mb={3}>
                             {project.description}
                           </Typography>
-                          
+
                           {project.progress > 0 && (
                             <Box mb={2}>
                               <Box display="flex" justify="space-between" mb={1}>
@@ -828,13 +853,13 @@ function LearnerDashboard() {
                               />
                             </Box>
                           )}
-                          
+
                           <Box display="flex" gap={1} mb={2} flexWrap="wrap">
                             {project.tech?.map((tech, idx) => (
                               <Chip key={idx} label={tech} size="small" variant="outlined" />
                             ))}
                           </Box>
-                          
+
                           <Box display="flex" justify="space-between" alignItems="center" mb={2}>
                             <Typography variant="body2" color="text.secondary">
                               👥 {project.team} members
@@ -877,7 +902,7 @@ function LearnerDashboard() {
                   Connect with industry experts and accelerate your growth
                 </Typography>
               </Box>
-              
+
               <Grid container spacing={3}>
                 {mentors.map((mentor, index) => (
                   <Grid item xs={12} sm={6} lg={4} key={index}>
@@ -885,7 +910,7 @@ function LearnerDashboard() {
                       <Card sx={{ height: "100%" }}>
                         <CardContent sx={{ p: 3 }}>
                           <Box display="flex" alignItems="center" mb={3}>
-                            <Avatar 
+                            <Avatar
                               src={mentor.avatar}
                               sx={{ width: 60, height: 60, mr: 2 }}
                             />
@@ -898,7 +923,7 @@ function LearnerDashboard() {
                               </Typography>
                             </Box>
                           </Box>
-                          
+
                           <Box display="flex" alignItems="center" mb={2}>
                             <StarIcon color="warning" sx={{ fontSize: 16, mr: 0.5 }} />
                             <Typography variant="body2" mr={2}>{mentor.rating}</Typography>
@@ -906,13 +931,13 @@ function LearnerDashboard() {
                               {mentor.sessions} sessions completed
                             </Typography>
                           </Box>
-                          
+
                           <Box display="flex" gap={1} mb={2} flexWrap="wrap">
                             {mentor.specialties.map((specialty, idx) => (
                               <Chip key={idx} label={specialty} size="small" variant="outlined" />
                             ))}
                           </Box>
-                          
+
                           <Typography variant="h6" color="secondary.main" fontWeight={600} mb={2}>
                             {mentor.price}
                           </Typography>
@@ -947,7 +972,7 @@ function LearnerDashboard() {
                   Track your internship applications and discover new opportunities
                 </Typography>
               </Box>
-              
+
               <Grid container spacing={3}>
                 {internships.map((internship, index) => (
                   <Grid item xs={12} lg={6} key={index}>
@@ -962,19 +987,19 @@ function LearnerDashboard() {
                               label={internship.status}
                               color={
                                 internship.status === "Applied" ? "primary" :
-                                internship.status === "Interview Scheduled" ? "warning" : "default"
+                                  internship.status === "Interview Scheduled" ? "warning" : "default"
                               }
                               size="small"
                             />
                           </Box>
-                          
+
                           <Box display="flex" alignItems="center" mb={2}>
                             <BusinessIcon sx={{ fontSize: 16, mr: 1, color: "text.secondary" }} />
                             <Typography variant="body2" color="text.secondary">
                               {internship.company}
                             </Typography>
                           </Box>
-                          
+
                           <Box display="flex" alignItems="center" mb={2}>
                             <Typography variant="body2" color="text.secondary" mr={2}>
                               📍 {internship.location}
@@ -983,17 +1008,17 @@ function LearnerDashboard() {
                               ⏱️ {internship.duration}
                             </Typography>
                           </Box>
-                          
+
                           <Typography variant="h6" color="secondary.main" fontWeight={600} mb={2}>
                             {internship.salary}
                           </Typography>
-                          
+
                           <Box display="flex" gap={1} mb={2} flexWrap="wrap">
                             {internship.skills.map((skill, idx) => (
                               <Chip key={idx} label={skill} size="small" variant="outlined" />
                             ))}
                           </Box>
-                          
+
                           <Typography variant="body2" color="text.secondary">
                             Applied: {new Date(internship.appliedDate).toLocaleDateString()}
                           </Typography>
@@ -1031,7 +1056,7 @@ function LearnerDashboard() {
                   Manage your payments and billing information
                 </Typography>
               </Box>
-              
+
               <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
                   <Card>
@@ -1057,7 +1082,7 @@ function LearnerDashboard() {
                     </CardContent>
                   </Card>
                 </Grid>
-                
+
                 <Grid item xs={12} md={6}>
                   <Card>
                     <CardContent sx={{ p: 3 }}>
@@ -1101,15 +1126,29 @@ function LearnerDashboard() {
                   Manage your profile and account settings
                 </Typography>
               </Box>
-              
+
               <Grid container spacing={3}>
                 <Grid item xs={12} md={4}>
                   <Card>
                     <CardContent sx={{ p: 3, textAlign: "center" }}>
-                      <Avatar 
+                      <Avatar
                         src={learnerData.avatar}
-                        sx={{ width: 120, height: 120, mx: "auto", mb: 2 }}
-                      />
+                        sx={{
+                          width: 120,
+                          height: 120,
+                          mx: "auto",
+                          mb: 2,
+                          border: "3px solid",
+                          borderColor: "primary.main",
+                          bgcolor: "#2ecc71",
+                          color: "#222",
+                          fontWeight: 700,
+                          fontSize: 48,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {!learnerData.avatar && userName ? userName.slice(0, 2).toUpperCase() : ""}
+                      </Avatar>
                       <Typography variant="h5" fontWeight={600} mb={1}>
                         {learnerData.name}
                       </Typography>
@@ -1120,7 +1159,7 @@ function LearnerDashboard() {
                     </CardContent>
                   </Card>
                 </Grid>
-                
+
                 <Grid item xs={12} md={8}>
                   <Card>
                     <CardContent sx={{ p: 3 }}>
@@ -1198,7 +1237,7 @@ function LearnerDashboard() {
         {/* Enhanced App Bar */}
         <AppBar
           position="fixed"
-          sx={{ 
+          sx={{
             zIndex: (theme) => theme.zIndex.drawer + 1,
             bgcolor: "white",
             color: "text.primary",
@@ -1247,8 +1286,8 @@ function LearnerDashboard() {
             variant="permanent"
             sx={{
               display: { xs: "none", md: "block" },
-              "& .MuiDrawer-paper": { 
-                boxSizing: "border-box", 
+              "& .MuiDrawer-paper": {
+                boxSizing: "border-box",
                 width: drawerWidth,
                 borderRight: "1px solid",
                 borderColor: "grey.200",
@@ -1274,8 +1313,8 @@ function LearnerDashboard() {
         </Box>
 
         {/* Payment Dialog */}
-        <Dialog 
-          open={paymentDialog} 
+        <Dialog
+          open={paymentDialog}
           onClose={() => setPaymentDialog(false)}
           maxWidth="sm"
           fullWidth
